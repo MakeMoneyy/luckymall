@@ -76,60 +76,60 @@ INSERT INTO users (username, password, email, phone) VALUES
 -- 插入商品测试数据
 INSERT INTO products (name, description, price, stock_quantity, category_id, image_url, sales_count, status) VALUES
 -- 手机通讯类商品
-('iPhone 15 Pro', 'Apple iPhone 15 Pro 256GB 深空黑色', 8999.00, 50, 6, 'https://via.placeholder.com/400x400/000080/FFFFFF?text=iPhone15Pro', 128, 1),
-('华为 Mate 60 Pro', '华为 Mate 60 Pro 512GB 雅黑色', 6999.00, 30, 6, 'https://via.placeholder.com/400x400/FF0000/FFFFFF?text=HuaweiMate60', 89, 1),
-('小米 14', '小米 14 手机 12GB+256GB 黑色', 3999.00, 80, 6, 'https://via.placeholder.com/400x400/FF6600/FFFFFF?text=Xiaomi14', 156, 1),
-('OPPO Find X7', 'OPPO Find X7 智能手机 16GB+512GB', 4999.00, 45, 6, 'https://via.placeholder.com/400x400/00CC00/FFFFFF?text=OPPOFindX7', 67, 1),
-('vivo X100 Pro', 'vivo X100 Pro 5G手机 16GB+512GB', 4999.00, 35, 6, 'https://via.placeholder.com/400x400/0066CC/FFFFFF?text=vivoX100Pro', 78, 1),
+('iPhone 15 Pro', 'Apple iPhone 15 Pro 256GB 深空黑色', 8999.00, 50, 6, 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop&crop=center', 128, 1),
+('华为 Mate 60 Pro', '华为 Mate 60 Pro 512GB 雅黑色', 6999.00, 30, 6, 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=400&fit=crop&crop=center', 89, 1),
+('小米 14', '小米 14 手机 12GB+256GB 黑色', 3999.00, 80, 6, 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop&crop=center', 156, 1),
+('OPPO Find X7', 'OPPO Find X7 智能手机 16GB+512GB', 4999.00, 45, 6, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop&crop=center', 67, 1),
+('vivo X100 Pro', 'vivo X100 Pro 5G手机 16GB+512GB', 4999.00, 35, 6, 'https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=400&h=400&fit=crop&crop=center', 78, 1),
 
 -- 电脑办公类商品
-('MacBook Pro 16', 'Apple MacBook Pro 16英寸 M3 Pro芯片', 19999.00, 20, 7, 'https://via.placeholder.com/400x400/C0C0C0/000000?text=MacBookPro16', 45, 1),
-('联想ThinkPad X1', '联想ThinkPad X1 Carbon 14英寸商务笔记本', 12999.00, 25, 7, 'https://via.placeholder.com/400x400/000000/FFFFFF?text=ThinkPadX1', 32, 1),
-('戴尔XPS 13', '戴尔XPS 13英寸超轻薄笔记本电脑', 8999.00, 30, 7, 'https://via.placeholder.com/400x400/0066FF/FFFFFF?text=DellXPS13', 28, 1),
-('华硕ZenBook', '华硕ZenBook 14英寸轻薄笔记本', 6999.00, 40, 7, 'https://via.placeholder.com/400x400/FFD700/000000?text=ZenBook14', 41, 1),
-('惠普战66', '惠普战66五代 14英寸商务笔记本', 4999.00, 55, 7, 'https://via.placeholder.com/400x400/4169E1/FFFFFF?text=HP战66', 38, 1),
+('MacBook Pro 16', 'Apple MacBook Pro 16英寸 M3 Pro芯片', 19999.00, 20, 7, 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop&crop=center', 45, 1),
+('联想ThinkPad X1', '联想ThinkPad X1 Carbon 14英寸商务笔记本', 12999.00, 25, 7, 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=center', 32, 1),
+('戴尔XPS 13', '戴尔XPS 13英寸超轻薄笔记本电脑', 8999.00, 30, 7, 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&h=400&fit=crop&crop=center', 28, 1),
+('华硕ZenBook', '华硕ZenBook 14英寸轻薄笔记本', 6999.00, 40, 7, 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&h=400&fit=crop&crop=center', 41, 1),
+('惠普战66', '惠普战66五代 14英寸商务笔记本', 4999.00, 55, 7, 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=400&h=400&fit=crop&crop=center', 38, 1),
 
 -- 数码配件类商品
-('苹果无线充电器', 'Apple MagSafe 无线充电器', 329.00, 100, 8, 'https://via.placeholder.com/400x400/FFFFFF/000000?text=MagSafe充电器', 234, 1),
-('小米充电宝', '小米移动电源3 20000mAh 快充版', 149.00, 200, 8, 'https://via.placeholder.com/400x400/FF6600/FFFFFF?text=小米充电宝', 567, 1),
-('AirPods Pro 2', 'Apple AirPods Pro 第二代', 1899.00, 80, 8, 'https://via.placeholder.com/400x400/FFFFFF/000000?text=AirPodsPro2', 189, 1),
-('华为FreeBuds', '华为FreeBuds Pro 3 无线耳机', 1499.00, 90, 8, 'https://via.placeholder.com/400x400/FF0000/FFFFFF?text=FreeBuds', 145, 1),
-('Anker数据线', 'Anker USB-C to Lightning 数据线 2米', 89.00, 300, 8, 'https://via.placeholder.com/400x400/000000/FFFFFF?text=Anker数据线', 456, 1),
+('苹果无线充电器', 'Apple MagSafe 无线充电器', 329.00, 100, 8, 'https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=400&h=400&fit=crop&crop=center', 234, 1),
+('小米充电宝', '小米移动电源3 20000mAh 快充版', 149.00, 200, 8, 'https://images.unsplash.com/photo-1609592853103-b27a0e0138bf?w=400&h=400&fit=crop&crop=center', 567, 1),
+('AirPods Pro 2', 'Apple AirPods Pro 第二代', 1899.00, 80, 8, 'https://images.unsplash.com/photo-1606400082777-ef05f3c5cde4?w=400&h=400&fit=crop&crop=center', 189, 1),
+('华为FreeBuds', '华为FreeBuds Pro 3 无线耳机', 1499.00, 90, 8, 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400&h=400&fit=crop&crop=center', 145, 1),
+('Anker数据线', 'Anker USB-C to Lightning 数据线 2米', 89.00, 300, 8, 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=400&fit=crop&crop=center', 456, 1),
 
 -- 男装类商品
-('优衣库羽绒服', '优衣库男装轻型羽绒服 黑色', 499.00, 120, 9, 'https://via.placeholder.com/400x400/000000/FFFFFF?text=优衣库羽绒服', 234, 1),
-('Nike运动套装', 'Nike男士运动套装 春季新款', 899.00, 80, 9, 'https://via.placeholder.com/400x400/000000/FFFFFF?text=Nike套装', 156, 1),
-('Adidas运动鞋', 'Adidas男士运动鞋 黑白配色', 699.00, 150, 9, 'https://via.placeholder.com/400x400/000000/FFFFFF?text=Adidas鞋', 289, 1),
-('海澜之家衬衫', '海澜之家男士商务长袖衬衫', 299.00, 200, 9, 'https://via.placeholder.com/400x400/4169E1/FFFFFF?text=海澜衬衫', 178, 1),
-('李宁运动裤', '李宁男士运动长裤 宽松版型', 299.00, 180, 9, 'https://via.placeholder.com/400x400/FF0000/FFFFFF?text=李宁运动裤', 134, 1),
+('优衣库羽绒服', '优衣库男装轻型羽绒服 黑色', 499.00, 120, 9, 'https://images.unsplash.com/photo-1551928134-c4c5d4abaa2c?w=400&h=400&fit=crop&crop=center', 234, 1),
+('Nike运动套装', 'Nike男士运动套装 春季新款', 899.00, 80, 9, 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop&crop=center', 156, 1),
+('Adidas运动鞋', 'Adidas男士运动鞋 黑白配色', 699.00, 150, 9, 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5a?w=400&h=400&fit=crop&crop=center', 289, 1),
+('海澜之家衬衫', '海澜之家男士商务长袖衬衫', 299.00, 200, 9, 'https://images.unsplash.com/photo-1603252109303-2751441b4c82?w=400&h=400&fit=crop&crop=center', 178, 1),
+('李宁运动裤', '李宁男士运动长裤 宽松版型', 299.00, 180, 9, 'https://images.unsplash.com/photo-1506629905607-47b252040a27?w=400&h=400&fit=crop&crop=center', 134, 1),
 
 -- 女装类商品
-('ZARA连衣裙', 'ZARA女装春季新款连衣裙', 399.00, 100, 10, 'https://via.placeholder.com/400x400/FFB6C1/000000?text=ZARA连衣裙', 167, 1),
-('H&M针织衫', 'H&M女装基础款针织衫 多色可选', 199.00, 150, 10, 'https://via.placeholder.com/400x400/FF69B4/FFFFFF?text=HM针织衫', 245, 1),
-('Only外套', 'Only女装春季薄款外套', 599.00, 80, 10, 'https://via.placeholder.com/400x400/9370DB/FFFFFF?text=Only外套', 98, 1),
-('Vero Moda裙子', 'Vero Moda半身裙 A字型设计', 299.00, 120, 10, 'https://via.placeholder.com/400x400/FF1493/FFFFFF?text=VM裙子', 156, 1),
-('UR卫衣', 'UR女装连帽卫衣 宽松版型', 399.00, 90, 10, 'https://via.placeholder.com/400x400/DA70D6/FFFFFF?text=UR卫衣', 123, 1),
+('ZARA连衣裙', 'ZARA女装春季新款连衣裙', 399.00, 100, 10, 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&h=400&fit=crop&crop=center', 167, 1),
+('H&M针织衫', 'H&M女装基础款针织衫 多色可选', 199.00, 150, 10, 'https://images.unsplash.com/photo-1571513722275-4b8c9ee8ba5b?w=400&h=400&fit=crop&crop=center', 245, 1),
+('Only外套', 'Only女装春季薄款外套', 599.00, 80, 10, 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&h=400&fit=crop&crop=center', 98, 1),
+('Vero Moda裙子', 'Vero Moda半身裙 A字型设计', 299.00, 120, 10, 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400&h=400&fit=crop&crop=center', 156, 1),
+('UR卫衣', 'UR女装连帽卫衣 宽松版型', 399.00, 90, 10, 'https://images.unsplash.com/photo-1556821840-3a9fbc8e7696?w=400&h=400&fit=crop&crop=center', 123, 1),
 
 -- 箱包类商品
-('新秀丽拉杆箱', '新秀丽20寸登机箱 万向轮', 899.00, 60, 11, 'https://via.placeholder.com/400x400/8B4513/FFFFFF?text=新秀丽箱', 89, 1),
-('小米背包', '小米都市背包 简约商务款', 199.00, 200, 11, 'https://via.placeholder.com/400x400/FF6600/FFFFFF?text=小米背包', 234, 1),
-('Coach手袋', 'Coach女士手提包 经典款', 2999.00, 30, 11, 'https://via.placeholder.com/400x400/D2691E/FFFFFF?text=Coach手袋', 45, 1),
-('Nike双肩包', 'Nike运动双肩包 大容量', 299.00, 150, 11, 'https://via.placeholder.com/400x400/000000/FFFFFF?text=Nike背包', 178, 1),
-('Kipling斜挎包', 'Kipling女士斜挎包 轻便款', 599.00, 80, 11, 'https://via.placeholder.com/400x400/FF69B4/FFFFFF?text=Kipling包', 67, 1),
+('新秀丽拉杆箱', '新秀丽20寸登机箱 万向轮', 899.00, 60, 11, 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop&crop=center', 89, 1),
+('小米背包', '小米都市背包 简约商务款', 199.00, 200, 11, 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop&crop=center', 234, 1),
+('Coach手袋', 'Coach女士手提包 经典款', 2999.00, 30, 11, 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=400&h=400&fit=crop&crop=center', 45, 1),
+('Nike双肩包', 'Nike运动双肩包 大容量', 299.00, 150, 11, 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop&crop=center', 178, 1),
+('Kipling斜挎包', 'Kipling女士斜挎包 轻便款', 599.00, 80, 11, 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&h=400&fit=crop&crop=center', 67, 1),
 
 -- 厨房用品类商品
-('九阳豆浆机', '九阳免滤豆浆机 多功能款', 399.00, 100, 12, 'https://via.placeholder.com/400x400/FF6600/FFFFFF?text=九阳豆浆机', 234, 1),
-('美的电饭煲', '美的IH电饭煲 4L容量 智能预约', 599.00, 80, 12, 'https://via.placeholder.com/400x400/FF0000/FFFFFF?text=美的电饭煲', 189, 1),
-('苏泊尔炒锅', '苏泊尔不锈钢炒锅 32cm无油烟', 299.00, 120, 12, 'https://via.placeholder.com/400x400/C0C0C0/000000?text=苏泊尔锅', 156, 1),
-('小熊养生壶', '小熊多功能养生壶 玻璃材质', 199.00, 150, 12, 'https://via.placeholder.com/400x400/FFB6C1/000000?text=小熊养生壶', 267, 1),
-('格兰仕微波炉', '格兰仕微波炉 23L机械式', 399.00, 90, 12, 'https://via.placeholder.com/400x400/000080/FFFFFF?text=格兰仕微波炉', 123, 1),
+('九阳豆浆机', '九阳免滤豆浆机 多功能款', 399.00, 100, 12, 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&crop=center', 234, 1),
+('美的电饭煲', '美的IH电饭煲 4L容量 智能预约', 599.00, 80, 12, 'https://images.unsplash.com/photo-1585515656968-b355f5c52c7c?w=400&h=400&fit=crop&crop=center', 189, 1),
+('苏泊尔炒锅', '苏泊尔不锈钢炒锅 32cm无油烟', 299.00, 120, 12, 'https://images.unsplash.com/photo-1556909114-c4bb37e7c8b7?w=400&h=400&fit=crop&crop=center', 156, 1),
+('小熊养生壶', '小熊多功能养生壶 玻璃材质', 199.00, 150, 12, 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400&h=400&fit=crop&crop=center', 267, 1),
+('格兰仕微波炉', '格兰仕微波炉 23L机械式', 399.00, 90, 12, 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=400&h=400&fit=crop&crop=center', 123, 1),
 
 -- 家纺用品类商品
-('水星家纺四件套', '水星家纺纯棉四件套 1.8m床用', 299.00, 100, 13, 'https://via.placeholder.com/400x400/FFB6C1/000000?text=水星四件套', 178, 1),
-('富安娜被子', '富安娜羽丝绒被 冬被加厚保暖', 599.00, 80, 13, 'https://via.placeholder.com/400x400/FFFFFF/000000?text=富安娜被', 134, 1),
-('罗莱枕头', '罗莱记忆棉枕头 护颈椎', 199.00, 150, 13, 'https://via.placeholder.com/400x400/E6E6FA/000000?text=罗莱枕头', 234, 1),
-('梦洁毛毯', '梦洁法兰绒毛毯 双人加厚', 199.00, 120, 13, 'https://via.placeholder.com/400x400/FFA500/000000?text=梦洁毛毯', 189, 1),
-('博洋地毯', '博洋客厅地毯 简约现代风格', 399.00, 60, 13, 'https://via.placeholder.com/400x400/8B4513/FFFFFF?text=博洋地毯', 78, 1);
+('水星家纺四件套', '水星家纺纯棉四件套 1.8m床用', 299.00, 100, 13, 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=400&fit=crop&crop=center', 178, 1),
+('富安娜被子', '富安娜羽丝绒被 冬被加厚保暖', 599.00, 80, 13, 'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=400&h=400&fit=crop&crop=center', 134, 1),
+('罗莱枕头', '罗莱记忆棉枕头 护颈椎', 199.00, 150, 13, 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400&h=400&fit=crop&crop=center', 234, 1),
+('梦洁毛毯', '梦洁法兰绒毛毯 双人加厚', 199.00, 120, 13, 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400&h=400&fit=crop&crop=center', 189, 1),
+('博洋地毯', '博洋客厅地毯 简约现代风格', 399.00, 60, 13, 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop&crop=center', 78, 1);
 
 -- 创建索引优化查询性能
 CREATE INDEX idx_products_name_price ON products(name, price);
