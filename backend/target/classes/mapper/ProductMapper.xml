@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.luckymall.mapper.ProductMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="ProductResultMap" type="com.luckymall.entity.Product">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="price" property="price"/>
+        <result column="stock_quantity" property="stockQuantity"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="sales_count" property="salesCount"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="category_name" property="categoryName"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        p.id, p.name, p.description, p.price, p.stock_quantity, p.category_id,
+        p.image_url, p.sales_count, p.status, p.created_at, p.updated_at,
+        c.name as category_name
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="Where_Clause">
+        <where>
+            p.status = 1
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+            <if test="minPrice != null">
+                AND p.price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                AND p.price &lt;= #{maxPrice}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 排序条件 -->
+    <sql id="Order_By_Clause">
+        <choose>
+            <when test="sortBy == 'price_asc'">
+                ORDER BY p.price ASC
+            </when>
+            <when test="sortBy == 'price_desc'">
+                ORDER BY p.price DESC
+            </when>
+            <when test="sortBy == 'sales_desc'">
+                ORDER BY p.sales_count DESC
+            </when>
+            <when test="sortBy == 'sales_asc'">
+                ORDER BY p.sales_count ASC
+            </when>
+            <when test="sortBy == 'name_asc'">
+                ORDER BY p.name ASC
+            </when>
+            <when test="sortBy == 'name_desc'">
+                ORDER BY p.name DESC
+            </when>
+            <otherwise>
+                ORDER BY p.created_at DESC
+            </otherwise>
+        </choose>
+    </sql>
+
+    <!-- 根据ID查询商品 -->
+    <select id="selectById" resultMap="ProductResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.id = #{id} AND p.status = 1
+    </select>
+
+    <!-- 分页查询商品列表 -->
+    <select id="selectProducts" resultMap="ProductResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        <include refid="Where_Clause"/>
+        <include refid="Order_By_Clause"/>
+    </select>
+
+    <!-- 统计商品总数 -->
+    <select id="countProducts" resultType="Long">
+        SELECT COUNT(*)
+        FROM products p
+        <include refid="Where_Clause"/>
+    </select>
+
+    <!-- 搜索商品 -->
+    <select id="searchProducts" resultMap="ProductResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        <where>
+            p.status = 1
+            <if test="keyword != null and keyword != ''">
+                AND (p.name LIKE CONCAT('%', #{keyword}, '%') 
+                     OR p.description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+        </where>
+        <include refid="Order_By_Clause"/>
+    </select>
+
+    <!-- 统计搜索商品总数 -->
+    <select id="countSearchProducts" resultType="Long">
+        SELECT COUNT(*)
+        FROM products p
+        <where>
+            p.status = 1
+            <if test="keyword != null and keyword != ''">
+                AND (p.name LIKE CONCAT('%', #{keyword}, '%') 
+                     OR p.description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+        </where>
+    </select>
+
+</mapper> 

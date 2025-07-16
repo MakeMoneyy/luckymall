@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.luckymall.mapper.CategoryMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="CategoryResultMap" type="com.luckymall.entity.Category">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, name, description, parent_id, created_at
+    </sql>
+
+    <!-- 查询所有分类 -->
+    <select id="selectAll" resultMap="CategoryResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM categories
+        ORDER BY parent_id, id
+    </select>
+
+    <!-- 根据父分类ID查询子分类 -->
+    <select id="selectByParentId" resultMap="CategoryResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM categories
+        <where>
+            <choose>
+                <when test="parentId == null">
+                    parent_id IS NULL
+                </when>
+                <otherwise>
+                    parent_id = #{parentId}
+                </otherwise>
+            </choose>
+        </where>
+        ORDER BY id
+    </select>
+
+    <!-- 根据ID查询分类 -->
+    <select id="selectById" resultMap="CategoryResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM categories
+        WHERE id = #{id}
+    </select>
+
+</mapper> 
