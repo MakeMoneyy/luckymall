@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luckymall.mapper.OrderMapper">
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, order_no, user_id, order_status, payment_status, payment_method,
+        total_amount, actual_amount, discount_amount, shipping_fee,
+        receiver_name, receiver_phone, receiver_address,
+        is_installment, installment_plan_id, installment_count, monthly_amount,
+        order_remark, created_at, updated_at, paid_at, shipped_at, completed_at
+    </sql>
+
+    <!-- 插入订单 -->
+    <insert id="insertOrder" parameterType="com.luckymall.entity.Order" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO orders (
+            order_no, user_id, order_status, payment_status, payment_method,
+            total_amount, actual_amount, discount_amount, shipping_fee,
+            receiver_name, receiver_phone, receiver_address,
+            is_installment, installment_plan_id, installment_count, monthly_amount,
+            order_remark
+        ) VALUES (
+            #{orderNo}, #{userId}, #{orderStatus}, #{paymentStatus}, #{paymentMethod},
+            #{totalAmount}, #{actualAmount}, #{discountAmount}, #{shippingFee},
+            #{receiverName}, #{receiverPhone}, #{receiverAddress},
+            #{isInstallment}, #{installmentPlanId}, #{installmentCount}, #{monthlyAmount},
+            #{orderRemark}
+        )
+    </insert>
+
+    <!-- 根据ID查询订单 -->
+    <select id="selectOrderById" parameterType="Long" resultType="com.luckymall.entity.Order">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据订单号查询订单 -->
+    <select id="selectOrderByOrderNo" parameterType="String" resultType="com.luckymall.entity.Order">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        WHERE order_no = #{orderNo}
+    </select>
+
+    <!-- 根据用户ID查询订单列表 -->
+    <select id="selectOrdersByUserId" parameterType="Long" resultType="com.luckymall.entity.Order">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 更新订单状态 -->
+    <update id="updateOrderStatus" parameterType="map">
+        UPDATE orders
+        SET order_status = #{orderStatus},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{orderId}
+    </update>
+
+    <!-- 更新支付状态 -->
+    <update id="updatePaymentStatus" parameterType="map">
+        UPDATE orders
+        SET payment_status = #{paymentStatus},
+            paid_at = #{paidAt},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{orderId}
+    </update>
+
+    <!-- 生成订单号 -->
+    <select id="getNextOrderSequence" resultType="Long">
+        SELECT IFNULL(MAX(CAST(SUBSTRING(order_no, 12) AS UNSIGNED)), 0) + 1
+        FROM orders
+        WHERE DATE(created_at) = CURDATE()
+    </select>
+
+</mapper> 

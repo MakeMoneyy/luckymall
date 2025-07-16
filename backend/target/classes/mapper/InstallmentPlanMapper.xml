@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luckymall.mapper.InstallmentPlanMapper">
+
+    <!-- 分期方案结果映射 -->
+    <resultMap id="InstallmentPlanResultMap" type="com.luckymall.entity.InstallmentPlan">
+        <id property="id" column="id"/>
+        <result property="planName" column="plan_name"/>
+        <result property="installmentCount" column="installment_count"/>
+        <result property="interestRate" column="interest_rate"/>
+        <result property="minAmount" column="min_amount"/>
+        <result property="maxAmount" column="max_amount"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, plan_name, installment_count, interest_rate, min_amount, max_amount, status, created_at, updated_at
+    </sql>
+
+    <!-- 查询所有启用的分期方案 -->
+    <select id="selectActiveInstallmentPlans" resultMap="InstallmentPlanResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM installment_plans
+        WHERE status = 1
+        ORDER BY installment_count ASC
+    </select>
+
+    <!-- 根据金额查询可用的分期方案 -->
+    <select id="selectAvailableInstallmentPlans" resultMap="InstallmentPlanResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM installment_plans
+        WHERE status = 1
+        AND min_amount &lt;= #{amount}
+        AND max_amount &gt;= #{amount}
+        ORDER BY installment_count ASC
+    </select>
+
+    <!-- 根据ID查询分期方案 -->
+    <select id="selectInstallmentPlanById" resultMap="InstallmentPlanResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM installment_plans
+        WHERE id = #{id}
+    </select>
+
+    <!-- 插入分期方案 -->
+    <insert id="insertInstallmentPlan" parameterType="com.luckymall.entity.InstallmentPlan" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO installment_plans (
+            plan_name, installment_count, interest_rate, min_amount, max_amount, status
+        ) VALUES (
+            #{planName}, #{installmentCount}, #{interestRate}, #{minAmount}, #{maxAmount}, #{status}
+        )
+    </insert>
+
+    <!-- 更新分期方案 -->
+    <update id="updateInstallmentPlan" parameterType="com.luckymall.entity.InstallmentPlan">
+        UPDATE installment_plans
+        <set>
+            <if test="planName != null">plan_name = #{planName},</if>
+            <if test="installmentCount != null">installment_count = #{installmentCount},</if>
+            <if test="interestRate != null">interest_rate = #{interestRate},</if>
+            <if test="minAmount != null">min_amount = #{minAmount},</if>
+            <if test="maxAmount != null">max_amount = #{maxAmount},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除分期方案 -->
+    <delete id="deleteInstallmentPlan">
+        DELETE FROM installment_plans WHERE id = #{id}
+    </delete>
+
+</mapper> 

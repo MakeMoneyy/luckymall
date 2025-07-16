@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luckymall.mapper.OrderItemMapper">
+
+    <!-- 订单商品结果映射 -->
+    <resultMap id="OrderItemResultMap" type="com.luckymall.entity.OrderItem">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="productName" column="product_name"/>
+        <result property="productImage" column="product_image"/>
+        <result property="productPrice" column="product_price"/>
+        <result property="quantity" column="quantity"/>
+        <result property="subtotal" column="subtotal"/>
+        <result property="createdAt" column="created_at"/>
+        
+        <!-- 关联商品信息 -->
+        <association property="product" 
+                    javaType="com.luckymall.entity.Product"
+                    select="com.luckymall.mapper.ProductMapper.selectById"
+                    column="product_id"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, order_id, product_id, product_name, product_image, 
+        product_price, quantity, subtotal, created_at
+    </sql>
+
+    <!-- 批量插入订单商品 -->
+    <insert id="insertOrderItems" parameterType="java.util.List">
+        INSERT INTO order_items (
+            order_id, product_id, product_name, product_image,
+            product_price, quantity, subtotal
+        ) VALUES
+        <foreach collection="orderItems" item="item" separator=",">
+            (#{item.orderId}, #{item.productId}, #{item.productName}, #{item.productImage},
+             #{item.productPrice}, #{item.quantity}, #{item.subtotal})
+        </foreach>
+    </insert>
+
+    <!-- 插入订单商品 -->
+    <insert id="insertOrderItem" parameterType="com.luckymall.entity.OrderItem" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO order_items (
+            order_id, product_id, product_name, product_image,
+            product_price, quantity, subtotal
+        ) VALUES (
+            #{orderId}, #{productId}, #{productName}, #{productImage},
+            #{productPrice}, #{quantity}, #{subtotal}
+        )
+    </insert>
+
+    <!-- 根据订单ID查询订单商品列表 -->
+    <select id="selectOrderItemsByOrderId" resultMap="OrderItemResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM order_items
+        WHERE order_id = #{orderId}
+        ORDER BY id
+    </select>
+
+    <!-- 根据ID查询订单商品 -->
+    <select id="selectOrderItemById" resultMap="OrderItemResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM order_items
+        WHERE id = #{id}
+    </select>
+
+    <!-- 更新订单商品 -->
+    <update id="updateOrderItem" parameterType="com.luckymall.entity.OrderItem">
+        UPDATE order_items
+        <set>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="subtotal != null">subtotal = #{subtotal},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除订单商品 -->
+    <delete id="deleteOrderItem">
+        DELETE FROM order_items WHERE id = #{id}
+    </delete>
+
+</mapper> 

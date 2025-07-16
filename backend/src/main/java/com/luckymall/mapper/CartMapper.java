@@ -23,6 +23,11 @@ public interface CartMapper {
     CartItem selectCartItemByUserIdAndProductId(@Param("userId") Long userId, @Param("productId") Long productId);
     
     /**
+     * 根据ID查询购物车商品
+     */
+    CartItem selectCartItemById(@Param("id") Long id);
+    
+    /**
      * 添加商品到购物车
      */
     int insertCartItem(CartItem cartItem);
