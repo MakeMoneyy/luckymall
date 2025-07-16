@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.luckymall.mapper.CartMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="CartItemResultMap" type="com.luckymall.entity.CartItem">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="product_id" property="productId"/>
+        <result column="quantity" property="quantity"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <!-- 关联商品信息 -->
+        <association property="product" javaType="com.luckymall.entity.Product">
+            <id column="p_id" property="id"/>
+            <result column="p_name" property="name"/>
+            <result column="p_description" property="description"/>
+            <result column="p_price" property="price"/>
+            <result column="p_stock_quantity" property="stockQuantity"/>
+            <result column="p_category_id" property="categoryId"/>
+            <result column="p_image_url" property="imageUrl"/>
+            <result column="p_sales_count" property="salesCount"/>
+            <result column="p_status" property="status"/>
+            <result column="p_created_at" property="createdAt"/>
+            <result column="p_updated_at" property="updatedAt"/>
+            <result column="category_name" property="categoryName"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        c.id, c.user_id, c.product_id, c.quantity, c.created_at, c.updated_at
+    </sql>
+
+    <!-- 商品查询字段 -->
+    <sql id="Product_Column_List">
+        p.id as p_id, p.name as p_name, p.description as p_description, 
+        p.price as p_price, p.stock_quantity as p_stock_quantity, 
+        p.category_id as p_category_id, p.image_url as p_image_url,
+        p.sales_count as p_sales_count, p.status as p_status,
+        p.created_at as p_created_at, p.updated_at as p_updated_at,
+        cat.name as category_name
+    </sql>
+
+    <!-- 根据用户ID获取购物车商品列表 -->
+    <select id="selectCartItemsByUserId" resultMap="CartItemResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>,
+            <include refid="Product_Column_List"/>
+        FROM cart_items c
+        LEFT JOIN products p ON c.product_id = p.id
+        LEFT JOIN categories cat ON p.category_id = cat.id
+        WHERE c.user_id = #{userId}
+        AND p.status = 1
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 根据用户ID和商品ID查询购物车项 -->
+    <select id="selectCartItemByUserIdAndProductId" resultMap="CartItemResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>,
+            <include refid="Product_Column_List"/>
+        FROM cart_items c
+        LEFT JOIN products p ON c.product_id = p.id
+        LEFT JOIN categories cat ON p.category_id = cat.id
+        WHERE c.user_id = #{userId} 
+        AND c.product_id = #{productId}
+        AND p.status = 1
+    </select>
+
+    <!-- 添加商品到购物车 -->
+    <insert id="insertCartItem" parameterType="com.luckymall.entity.CartItem" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO cart_items (user_id, product_id, quantity)
+        VALUES (#{userId}, #{productId}, #{quantity})
+        ON DUPLICATE KEY UPDATE 
+        quantity = quantity + #{quantity},
+        updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- 更新购物车商品数量 -->
+    <update id="updateCartItemQuantity">
+        UPDATE cart_items 
+        SET quantity = #{quantity}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除购物车商品 -->
+    <delete id="deleteCartItem">
+        DELETE FROM cart_items 
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 根据用户ID删除所有购物车商品 -->
+    <delete id="deleteCartItemsByUserId">
+        DELETE FROM cart_items 
+        WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 根据用户ID和商品ID删除购物车商品 -->
+    <delete id="deleteCartItemByUserIdAndProductId">
+        DELETE FROM cart_items 
+        WHERE user_id = #{userId} AND product_id = #{productId}
+    </delete>
+
+    <!-- 统计用户购物车商品数量 -->
+    <select id="countCartItemsByUserId" resultType="int">
+        SELECT COALESCE(SUM(quantity), 0)
+        FROM cart_items c
+        LEFT JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = #{userId}
+        AND p.status = 1
+    </select>
+
+</mapper> 
