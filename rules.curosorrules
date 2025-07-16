@@ -1,3 +1,4 @@
 先写测试然后写代码，然后运行测试并更新代码直到测试通过
-powershell命令不要使用&&
+powershell命令不要使用&&，“&&”不是此版本中的有效语句分隔符
 Mysql的密码是123456
+使用mvn -f backend/pom.xml spring-boot:run
