@@ -8,14 +8,17 @@
     <resultMap id="CategoryResultMap" type="com.luckymall.entity.Category">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
-        <result column="description" property="description"/>
         <result column="parent_id" property="parentId"/>
+        <result column="level" property="level"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="status" property="status"/>
         <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
     </resultMap>
 
     <!-- 基础查询字段 -->
     <sql id="Base_Column_List">
-        id, name, description, parent_id, created_at
+        id, name, parent_id, level, sort_order, status, created_at, updated_at
     </sql>
 
     <!-- 查询所有分类 -->

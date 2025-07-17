@@ -20,17 +20,32 @@ public class Category {
     private String name;
     
     /**
-     * 分类描述
-     */
-    private String description;
-    
-    /**
      * 父分类ID
      */
     private Long parentId;
     
     /**
+     * 分类级别
+     */
+    private Integer level;
+    
+    /**
+     * 排序顺序
+     */
+    private Integer sortOrder;
+    
+    /**
+     * 状态 1:启用 0:禁用
+     */
+    private Integer status;
+    
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;
+    
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updatedAt;
 } 
