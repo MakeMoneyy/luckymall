@@ -131,4 +131,46 @@
         </where>
     </select>
 
+    <!-- 更新商品库存 -->
+    <update id="updateStockQuantity">
+        UPDATE products 
+        SET stock_quantity = #{stockQuantity},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{productId} AND status = 1
+    </update>
+
+    <!-- 扣减商品库存 -->
+    <update id="decreaseStockQuantity">
+        UPDATE products 
+        SET stock_quantity = stock_quantity - #{quantity},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{productId} 
+          AND status = 1 
+          AND stock_quantity >= #{quantity}
+    </update>
+
+    <!-- 增加商品库存 -->
+    <update id="increaseStockQuantity">
+        UPDATE products 
+        SET stock_quantity = stock_quantity + #{quantity},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{productId} AND status = 1
+    </update>
+
+    <!-- 更新商品销量 -->
+    <update id="increaseSalesCount">
+        UPDATE products 
+        SET sales_count = sales_count + #{salesCount},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{productId} AND status = 1
+    </update>
+
+    <!-- 减少商品销量 -->
+    <update id="decreaseSalesCount">
+        UPDATE products 
+        SET sales_count = GREATEST(0, sales_count - #{salesCount}),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{productId} AND status = 1
+    </update>
+
 </mapper> 

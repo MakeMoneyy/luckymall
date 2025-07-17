@@ -123,6 +123,37 @@ public class OrderController {
     }
 
     /**
+     * 支付订单（模拟支付处理）
+     */
+    @PostMapping("/{orderId}/pay")
+    public Result<String> payOrder(@PathVariable Long orderId,
+                                 @RequestParam Long userId) {
+        try {
+            // 验证订单是否存在且属于当前用户
+            Order order = orderService.getOrderById(orderId);
+            if (order == null || !order.getUserId().equals(userId)) {
+                return Result.error("订单不存在");
+            }
+
+            // 只有待付款状态的订单可以支付
+            if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
+                return Result.error("当前订单状态不允许支付");
+            }
+
+            // 处理支付成功的状态流转
+            boolean success = orderService.processPaymentSuccess(orderId);
+            if (success) {
+                return Result.success("支付成功");
+            } else {
+                return Result.error("支付失败");
+            }
+        } catch (Exception e) {
+            log.error("支付订单失败", e);
+            return Result.error("支付失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 获取所有启用的分期方案
      */
     @GetMapping("/installment-plans")

@@ -46,6 +46,11 @@ public interface OrderService {
     boolean updatePaymentStatus(Long orderId, String paymentStatus);
     
     /**
+     * 处理订单支付成功后的状态流转
+     */
+    boolean processPaymentSuccess(Long orderId);
+    
+    /**
      * 取消订单
      */
     boolean cancelOrder(Long orderId, Long userId);

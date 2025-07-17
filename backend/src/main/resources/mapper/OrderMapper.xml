@@ -11,6 +11,39 @@
         order_remark, created_at, updated_at, paid_at, shipped_at, completed_at
     </sql>
 
+    <!-- 包含订单商品的结果映射 -->
+    <resultMap id="OrderWithItemsResultMap" type="com.luckymall.entity.Order">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="user_id" property="userId"/>
+        <result column="order_status" property="orderStatus"/>
+        <result column="payment_status" property="paymentStatus"/>
+        <result column="payment_method" property="paymentMethod"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="actual_amount" property="actualAmount"/>
+        <result column="discount_amount" property="discountAmount"/>
+        <result column="shipping_fee" property="shippingFee"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="receiver_phone" property="receiverPhone"/>
+        <result column="receiver_address" property="receiverAddress"/>
+        <result column="is_installment" property="isInstallment"/>
+        <result column="installment_plan_id" property="installmentPlanId"/>
+        <result column="installment_count" property="installmentCount"/>
+        <result column="monthly_amount" property="monthlyAmount"/>
+        <result column="order_remark" property="orderRemark"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="paid_at" property="paidAt"/>
+        <result column="shipped_at" property="shippedAt"/>
+        <result column="completed_at" property="completedAt"/>
+        
+        <!-- 关联查询订单商品 -->
+        <collection property="orderItems" 
+                   ofType="com.luckymall.entity.OrderItem"
+                   select="com.luckymall.mapper.OrderItemMapper.selectOrderItemsByOrderId"
+                   column="id"/>
+    </resultMap>
+
     <!-- 插入订单 -->
     <insert id="insertOrder" parameterType="com.luckymall.entity.Order" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO orders (
@@ -29,24 +62,32 @@
     </insert>
 
     <!-- 根据ID查询订单 -->
-    <select id="selectOrderById" parameterType="Long" resultType="com.luckymall.entity.Order">
+    <select id="selectOrderById" parameterType="Long" resultMap="OrderWithItemsResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM orders
         WHERE id = #{id}
     </select>
 
     <!-- 根据订单号查询订单 -->
-    <select id="selectOrderByOrderNo" parameterType="String" resultType="com.luckymall.entity.Order">
+    <select id="selectOrderByOrderNo" parameterType="String" resultMap="OrderWithItemsResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM orders
         WHERE order_no = #{orderNo}
     </select>
 
     <!-- 根据用户ID查询订单列表 -->
-    <select id="selectOrdersByUserId" parameterType="Long" resultType="com.luckymall.entity.Order">
+    <select id="selectOrdersByUserId" parameterType="Long" resultMap="OrderWithItemsResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM orders
         WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据用户ID和状态查询订单列表 -->
+    <select id="selectOrdersByUserIdAndStatus" resultMap="OrderWithItemsResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        WHERE user_id = #{userId} AND order_status = #{orderStatus}
         ORDER BY created_at DESC
     </select>
 
@@ -55,16 +96,30 @@
         UPDATE orders
         SET order_status = #{orderStatus},
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = #{orderId}
+        WHERE id = #{id}
     </update>
 
     <!-- 更新支付状态 -->
     <update id="updatePaymentStatus" parameterType="map">
         UPDATE orders
         SET payment_status = #{paymentStatus},
-            paid_at = #{paidAt},
+            paid_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = #{orderId}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新订单（通用更新方法） -->
+    <update id="updateOrder" parameterType="com.luckymall.entity.Order">
+        UPDATE orders
+        <set>
+            <if test="orderStatus != null">order_status = #{orderStatus},</if>
+            <if test="paymentStatus != null">payment_status = #{paymentStatus},</if>
+            <if test="paidAt != null">paid_at = #{paidAt},</if>
+            <if test="shippedAt != null">shipped_at = #{shippedAt},</if>
+            <if test="completedAt != null">completed_at = #{completedAt},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
     </update>
 
     <!-- 生成订单号 -->

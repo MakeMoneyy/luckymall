@@ -94,7 +94,7 @@ if ($cartItemIds.Count -gt 0) {
     }
     
     try {
-        $headers = @{ "Content-Type" = "application/json" }
+        $headers = @{ 'Content-Type' = 'application/json' }
         $body = $orderRequest | ConvertTo-Json
         $response = Invoke-RestMethod -Uri "$baseUrl/orders/$userId" -Method POST -Body $body -Headers $headers
         
@@ -123,7 +123,7 @@ if ($cartItemIds.Count -gt 0 -and $installmentPlanId) {
             productId = 1
             quantity = 1
         }
-        $headers = @{ "Content-Type" = "application/json" }
+        $headers = @{ 'Content-Type' = 'application/json' }
         $body = $addRequest | ConvertTo-Json
         $response = Invoke-RestMethod -Uri "$baseUrl/cart/$userId/add" -Method POST -Body $body -Headers $headers
         

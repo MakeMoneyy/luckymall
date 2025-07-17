@@ -142,6 +142,22 @@ public class OrderServiceImpl implements OrderService {
                 log.info("订单商品创建成功，数量：{}", orderItems.size());
             }
             
+            // 8.5. 扣减商品库存并更新销量
+            for (CartItem cartItem : cartItems) {
+                Long productId = cartItem.getProduct().getId();
+                Integer quantity = cartItem.getQuantity();
+                
+                // 扣减库存
+                int stockUpdateResult = productMapper.decreaseStockQuantity(productId, quantity);
+                if (stockUpdateResult == 0) {
+                    throw new RuntimeException("扣减商品库存失败，商品ID：" + productId + "，可能库存不足");
+                }
+                
+                // 更新销量
+                productMapper.increaseSalesCount(productId, quantity);
+                log.info("商品{}库存扣减{}，销量增加{}", productId, quantity, quantity);
+            }
+            
             // 9. 清空购物车中的已下单商品
             for (Long cartItemId : request.getCartItemIds()) {
                 cartMapper.deleteCartItem(cartItemId);
@@ -217,6 +233,44 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.updatePaymentStatus(orderId, paymentStatus) > 0;
     }
 
+    /**
+     * 处理订单支付成功后的状态流转
+     */
+    public boolean processPaymentSuccess(Long orderId) {
+        try {
+            Order order = orderMapper.selectOrderById(orderId);
+            if (order == null) {
+                return false;
+            }
+
+            // 更新支付状态为已支付
+            boolean paymentUpdated = orderMapper.updatePaymentStatus(orderId, "PAID") > 0;
+            if (!paymentUpdated) {
+                return false;
+            }
+
+            // 根据支付方式和分期情况更新订单状态
+            String newOrderStatus;
+            if (order.getIsInstallment() == 1) {
+                // 分期付款：首期支付成功后状态变为"PAID"
+                newOrderStatus = "PAID";
+            } else {
+                // 全款支付：直接变为已支付状态
+                newOrderStatus = "PAID";
+            }
+
+            // 更新订单状态
+            boolean statusUpdated = orderMapper.updateOrderStatus(orderId, newOrderStatus) > 0;
+            
+            log.info("订单{}支付成功处理完成，订单状态：{}，支付状态：PAID", orderId, newOrderStatus);
+            return statusUpdated;
+
+        } catch (Exception e) {
+            log.error("处理订单支付成功失败，订单ID：{}", orderId, e);
+            return false;
+        }
+    }
+
     @Override
     public boolean cancelOrder(Long orderId, Long userId) {
         // 验证订单是否存在且属于当前用户
@@ -230,7 +284,56 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("当前订单状态不允许取消");
         }
         
-        return orderMapper.updateOrderStatus(orderId, "CANCELLED") > 0;
+        try {
+            // 1. 更新订单状态为已取消
+            boolean orderCancelled = orderMapper.updateOrderStatus(orderId, "CANCELLED") > 0;
+            if (!orderCancelled) {
+                return false;
+            }
+
+            // 2. 回滚库存和销量
+            rollbackInventoryForOrder(orderId);
+            
+            log.info("订单{}取消成功，已回滚库存", orderId);
+            return true;
+        } catch (Exception e) {
+            log.error("取消订单失败，订单ID：{}", orderId, e);
+            throw new RuntimeException("取消订单失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 为订单回滚库存和销量
+     */
+    private void rollbackInventoryForOrder(Long orderId) {
+        try {
+            // 获取订单商品列表
+            List<OrderItem> orderItems = orderItemMapper.selectOrderItemsByOrderId(orderId);
+            
+            for (OrderItem orderItem : orderItems) {
+                Long productId = orderItem.getProductId();
+                Integer quantity = orderItem.getQuantity();
+                
+                // 回滚库存
+                int stockRestoreResult = productMapper.increaseStockQuantity(productId, quantity);
+                if (stockRestoreResult > 0) {
+                    log.info("商品{}库存回滚成功，增加数量：{}", productId, quantity);
+                } else {
+                    log.warn("商品{}库存回滚失败", productId);
+                }
+                
+                // 回滚销量
+                int salesRollbackResult = productMapper.decreaseSalesCount(productId, quantity);
+                if (salesRollbackResult > 0) {
+                    log.info("商品{}销量回滚成功，减少数量：{}", productId, quantity);
+                } else {
+                    log.warn("商品{}销量回滚失败", productId);
+                }
+            }
+        } catch (Exception e) {
+            log.error("回滚订单{}库存失败", orderId, e);
+            throw new RuntimeException("回滚库存失败: " + e.getMessage());
+        }
     }
 
     @Override
