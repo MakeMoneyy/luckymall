@@ -1,64 +1,42 @@
 package com.luckymall.config;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.time.Duration;
-
+/**
+ * Redis配置类
+ */
 @Configuration
 @EnableCaching
 public class RedisConfig {
-    
+
+    /**
+     * 配置RedisTemplate
+     *
+     * @param connectionFactory Redis连接工厂
+     * @return RedisTemplate
+     */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(factory);
+        template.setConnectionFactory(connectionFactory);
         
-        // 配置JSON序列化器
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
-        
-        GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
-        
-        // 设置序列化器
+        // 使用StringRedisSerializer来序列化和反序列化redis的key值
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(jackson2JsonRedisSerializer);
+        // 使用GenericJackson2JsonRedisSerializer来序列化和反序列化redis的value值
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        
+        // Hash的key也采用StringRedisSerializer的序列化方式
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+        // Hash的value也采用GenericJackson2JsonRedisSerializer的序列化方式
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
         
         template.afterPropertiesSet();
         return template;
-    }
-    
-    @Bean
-    public CacheManager cacheManager(RedisConnectionFactory factory) {
-        return RedisCacheManager
-            .RedisCacheManagerBuilder
-            .fromConnectionFactory(factory)
-            .cacheDefaults(cacheConfiguration())
-            .build();
-    }
-    
-    private RedisCacheConfiguration cacheConfiguration() {
-        return RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(Duration.ofMinutes(30))
-            .serializeKeysWith(RedisSerializationContext.SerializationPair
-                .fromSerializer(new StringRedisSerializer()))
-            .serializeValuesWith(RedisSerializationContext.SerializationPair
-                .fromSerializer(new GenericJackson2JsonRedisSerializer()));
     }
 } 

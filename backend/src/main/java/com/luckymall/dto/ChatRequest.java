@@ -1,19 +1,16 @@
 package com.luckymall.dto;
 
 import lombok.Data;
-import java.math.BigDecimal;
 
+import java.util.Map;
+
+/**
+ * 聊天请求数据传输对象
+ */
 @Data
 public class ChatRequest {
-    private Long userId;
+    private String userId;
     private String sessionId;
     private String message;
-    private ChatContext context;
-
-    @Data
-    public static class ChatContext {
-        private Long productId;
-        private BigDecimal productPrice;
-        private String currentPage;
-    }
+    private Map<String, Object> context;
 } 

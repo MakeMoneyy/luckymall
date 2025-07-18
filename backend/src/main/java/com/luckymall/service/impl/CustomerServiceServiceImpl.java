@@ -1,5 +1,6 @@
 package com.luckymall.service.impl;
 
+import com.luckymall.dto.ChatContext;
 import com.luckymall.dto.ChatRequest;
 import com.luckymall.dto.ChatResponse;
 import com.luckymall.dto.UserCreditCardResponse;
@@ -19,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -51,10 +53,11 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
         
         if (cachedResponse != null) {
             cachedResponse.setCacheHit(true);
-            cachedResponse.setResponseTimeMs((int) (System.currentTimeMillis() - startTime));
+            // 设置响应时间
+            long responseTime = System.currentTimeMillis() - startTime;
             
             // 记录对话
-            saveChatRecord(request, cachedResponse, true, (int) (System.currentTimeMillis() - startTime));
+            saveChatRecord(request, cachedResponse, true, (int) responseTime);
             
             return cachedResponse;
         }
@@ -62,13 +65,13 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
         // 2. 生成AI响应
         ChatResponse response = generateAIResponse(request);
         response.setCacheHit(false);
-        response.setResponseTimeMs((int) (System.currentTimeMillis() - startTime));
+        long responseTime = System.currentTimeMillis() - startTime;
         
         // 3. 缓存响应结果
         redisTemplate.opsForValue().set(cacheKey, response, 1, TimeUnit.HOURS);
         
         // 4. 记录对话
-        saveChatRecord(request, response, false, response.getResponseTimeMs());
+        saveChatRecord(request, response, false, (int) responseTime);
         
         return response;
     }
@@ -101,6 +104,15 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
         redisTemplate.opsForValue().set(key, response, 10, TimeUnit.MINUTES);
         
         return response;
+    }
+    
+    // 添加一个重载方法，接受String类型的userId
+    public UserCreditCardResponse getUserCreditCard(String userId) {
+        try {
+            return getUserCreditCard(Long.parseLong(userId));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
     
     private ChatResponse generateAIResponse(ChatRequest request) {
@@ -178,9 +190,29 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
         promotionInfo.setType("installment_promotion");
         promotionInfo.setPointsEarned(calculatePoints(request.getContext()));
         promotionInfo.setInstallmentOptions(Arrays.asList(3, 6, 12, 24));
-        if (request.getContext() != null && request.getContext().getProductPrice() != null) {
-            promotionInfo.setDiscountAmount(request.getContext().getProductPrice().multiply(new BigDecimal("0.01")));
+        
+        // 处理商品价格
+        if (request.getContext() != null && request.getContext().containsKey("productPrice")) {
+            Object priceObj = request.getContext().get("productPrice");
+            BigDecimal price = null;
+            
+            if (priceObj instanceof BigDecimal) {
+                price = (BigDecimal) priceObj;
+            } else if (priceObj instanceof Number) {
+                price = new BigDecimal(((Number) priceObj).doubleValue());
+            } else if (priceObj instanceof String) {
+                try {
+                    price = new BigDecimal((String) priceObj);
+                } catch (Exception e) {
+                    // 忽略转换错误
+                }
+            }
+            
+            if (price != null) {
+                promotionInfo.setDiscountAmount(price.multiply(new BigDecimal("0.01")));
+            }
         }
+        
         response.setPromotionInfo(promotionInfo);
         
         return response;
@@ -254,49 +286,98 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
         return response;
     }
     
-    private String buildCacheKey(String message, ChatRequest.ChatContext context) {
-        String contextData = "";
+    private String buildCacheKey(String message, Map<String, Object> context) {
+        StringBuilder sb = new StringBuilder(message);
+        
         if (context != null) {
-            contextData = String.format("%s_%s_%s", 
-                context.getProductId() != null ? context.getProductId() : "0",
-                context.getProductPrice() != null ? context.getProductPrice() : "0",
-                context.getCurrentPage() != null ? context.getCurrentPage() : "");
+            if (context.containsKey("productId")) {
+                sb.append(":").append(context.get("productId"));
+            }
+            if (context.containsKey("productPrice")) {
+                sb.append(":").append(context.get("productPrice"));
+            }
         }
-        return AI_CACHE_PREFIX + DigestUtils.md5DigestAsHex((message + contextData).getBytes());
+        
+        return AI_CACHE_PREFIX + DigestUtils.md5DigestAsHex(sb.toString().getBytes());
     }
     
     private void saveChatRecord(ChatRequest request, ChatResponse response, boolean cacheHit, int responseTime) {
-        CustomerServiceChat chat = new CustomerServiceChat();
-        chat.setUserId(request.getUserId());
-        chat.setSessionId(request.getSessionId());
-        chat.setUserMessage(request.getMessage());
-        chat.setBotResponse(response.getMessage());
-        chat.setCacheHit(cacheHit);
-        chat.setResponseTimeMs(responseTime);
-        chat.setCreatedTime(LocalDateTime.now());
+        CustomerServiceChat record = new CustomerServiceChat();
         
-        chatMapper.insert(chat);
+        // 处理userId，转换为Long类型
+        try {
+            record.setUserId(Long.parseLong(request.getUserId()));
+        } catch (NumberFormatException e) {
+            // 如果转换失败，设置为默认值
+            record.setUserId(0L);
+        }
+        
+        record.setSessionId(request.getSessionId());
+        record.setUserMessage(request.getMessage());
+        
+        // 使用result或message字段
+        String botResponse = response.getResult();
+        if (botResponse == null || botResponse.isEmpty()) {
+            botResponse = response.getMessage();
+        }
+        record.setBotResponse(botResponse);
+        
+        record.setCacheHit(cacheHit);
+        record.setResponseTimeMs(responseTime);
+        record.setCreatedTime(LocalDateTime.now());
+        
+        chatMapper.insert(record);
     }
     
-    private Integer calculatePoints(ChatRequest.ChatContext context) {
-        if (context != null && context.getProductPrice() != null) {
-            return context.getProductPrice().intValue(); // 1元1积分
+    private Integer calculatePoints(Map<String, Object> context) {
+        if (context != null && context.containsKey("productPrice")) {
+            Object priceObj = context.get("productPrice");
+            if (priceObj instanceof BigDecimal) {
+                return ((BigDecimal) priceObj).intValue();
+            } else if (priceObj instanceof Number) {
+                return ((Number) priceObj).intValue();
+            } else if (priceObj instanceof String) {
+                try {
+                    return new BigDecimal((String) priceObj).intValue();
+                } catch (Exception e) {
+                    // 忽略转换错误
+                }
+            }
         }
         return 100; // 默认积分
     }
     
-    private double getMonthlyPayment(ChatRequest.ChatContext context) {
-        if (context != null && context.getProductPrice() != null) {
-            return context.getProductPrice().doubleValue() / 12;
+    private double getMonthlyPayment(Map<String, Object> context) {
+        if (context != null && context.containsKey("productPrice")) {
+            Object priceObj = context.get("productPrice");
+            BigDecimal price = null;
+            
+            if (priceObj instanceof BigDecimal) {
+                price = (BigDecimal) priceObj;
+            } else if (priceObj instanceof Number) {
+                price = new BigDecimal(((Number) priceObj).doubleValue());
+            } else if (priceObj instanceof String) {
+                try {
+                    price = new BigDecimal((String) priceObj);
+                } catch (Exception e) {
+                    // 忽略转换错误
+                }
+            }
+            
+            if (price != null) {
+                return price.doubleValue() / 12;
+            }
         }
         return 100.0; // 默认月供
     }
     
     private String getCardLevelText(String cardLevel) {
-        switch (cardLevel) {
-            case "PLATINUM": return "白金卡";
-            case "DIAMOND": return "钻石卡";
-            default: return "金卡";
+        if ("PLATINUM".equals(cardLevel)) {
+            return "白金卡";
+        } else if ("DIAMOND".equals(cardLevel)) {
+            return "钻石卡";
+        } else {
+            return "金卡";
         }
     }
 } 

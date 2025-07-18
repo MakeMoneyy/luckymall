@@ -61,6 +61,20 @@ pagehelper:
   support-methods-arguments: true
   params: count=countSql
 
+# 通义千问API配置
+dashscope:
+  api:
+    # API密钥，优先从环境变量DASHSCOPE_API_KEY获取
+    key: ${DASHSCOPE_API_KEY:your_api_key_here}
+    # 模型名称
+    model: qwen-plus
+    # 温度参数
+    temperature: 0.7
+    # Top P参数
+    top-p: 0.9
+    # 最大生成token数
+    max-tokens: 2048
+
 # 日志配置
 logging:
   level:
