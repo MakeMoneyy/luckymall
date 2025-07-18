@@ -1,0 +1,821 @@
+# 招商银行信用卡商城智能客服开发需求文档
+
+## 一、项目概述
+
+### 1.1 项目背景
+
+在已有的基础电商系统基础上，开发一个专注于信用卡价值推广的智能客服系统，通过AI对话引导用户选择信用卡支付，提升信用卡使用率。
+
+### 1.2 核心目标
+
+- **主要目标**：通过智能对话引导用户使用信用卡支付
+- **次要目标**：提供基础客服功能，解答用户疑问
+- **业务目标**：提升信用卡支付占比20%以上
+
+### 1.3 设计原则
+
+- 技术实现简单，开发周期短
+- 突出信用卡独特价值
+- 运用心理激励机制
+- 用户体验友好
+
+## 二、功能需求
+
+### 2.1 核心功能模块
+
+#### 模块1：支付咨询助手（优先级：高）
+
+**功能描述**：当用户咨询支付相关问题时，智能推荐信用卡支付
+
+**触发场景**：
+
+- 用户询问："这个商品怎么付款？"
+- 用户询问："有什么优惠吗？"
+- 用户询问："可以分期吗？"
+
+**AI回复策略**：
+
+```
+用户："这个手机可以分期吗？"
+
+客服回复：
+"当然可以！使用您的招商银行信用卡，这款手机支持：
+🎁 12期免息分期，月供仅需416元
+💰 立即获得288积分（价值28.8元）
+⏰ 48天超长免息期，5月31日才需还款
+💳 享受购物保险，商品损坏全额赔付
+
+相比支付宝支付，您将额外获得价值约50元的权益！
+现在就用信用卡下单吧～"
+```
+
+#### 模块2：积分价值推广（优先级：高）
+
+**功能描述**：主动介绍积分价值，引导用户关注信用卡收益
+
+**触发场景**：
+
+- 用户询问积分相关问题
+- 用户浏览高价商品时主动推送
+- 用户犹豫支付方式时
+
+**AI回复示例**：
+
+```
+用户："积分有什么用？"
+
+客服回复：
+"您的招行积分可是很值钱的哦！
+💎 当前积分：8,500分（价值85元）
+🛍️ 可直接抵扣现金使用
+🎁 兑换精美礼品
+⚡ 重要提醒：2,000积分将在15天后到期！
+
+建议您：
+1. 立即使用积分抵扣部分商品费用
+2. 用信用卡支付剩余金额，获得新积分
+3. 这样既用了即将到期的积分，又赚了新积分！
+
+要我帮您计算最优搭配方案吗？"
+```
+
+#### 模块3：权益价值展示（优先级：中）
+
+**功能描述**：根据用户卡等级，展示专属权益价值
+
+**实现逻辑**：
+
+- 识别用户信用卡等级
+- 匹配对应权益内容
+- 突出独享价值
+
+#### 模块4：FAQ智能问答（优先级：中）
+
+**功能描述**：回答常见购物问题，但巧妙融入信用卡推广
+
+**常见问题处理**：
+
+```
+Q: "订单什么时候发货？"
+A: "您的订单预计明天发货哦～
+   💡小贴士：下次购买建议使用信用卡支付，可以享受物流保险，
+   万一包裹丢失或损坏，招行为您全额赔付！"
+
+Q: "可以退货吗？"
+A: "当然可以退货！7天无理由退换。
+   🎯特别说明：信用卡支付的订单，退货更便捷，
+   还享受退货运费险，完全零风险购物体验！"
+```
+
+### 2.2 心理激励机制设计
+
+#### 2.2.1 损失厌恶应用
+
+**实现策略**：强调不用信用卡的"损失"
+
+```
+"选择支付宝支付将错失：
+❌ 188积分奖励（价值18.8元）
+❌ 12期免息分期权益
+❌ 购物保险保障
+❌ 积分翻倍活动参与资格
+
+确定要放弃这些价值约60元的权益吗？"
+```
+
+#### 2.2.2 稀缺性营造
+
+**实现策略**：限时优惠和专属权益
+
+```
+"⚡限时专享：
+您的白金卡用户专属8.8折优惠仅剩2小时！
+全站仅限100名白金卡用户享受，先到先得！
+立即使用信用卡支付，享受专属特权～"
+```
+
+#### 2.2.3 社会认同
+
+**实现策略**：展示其他用户选择
+
+```
+"💡友情提示：
+今日已有89%的用户选择信用卡支付
+平均每人通过信用卡支付节省了32元
+加入聪明消费者的行列，立即选择信用卡支付！"
+```
+
+## 三、技术架构设计
+
+### 3.1 整体架构
+
+```
+前端 (React)
+    ↓
+后端 (Spring Boot)
+    ↓
+Redis缓存中间件
+    ↓
+AI服务 (豆包/百度文心API)
+    ↓
+数据库 (MySQL)
+```
+
+#### 3.1.1 Redis中间件架构
+
+```
+客户端请求
+    ↓
+对话上下文管理 (Redis Session存储)
+    ↓
+智能缓存检查 (Redis Cache)
+    ↓ (缓存未命中)
+AI服务调用
+    ↓
+缓存AI响应 (Redis Cache)
+    ↓
+返回结果
+```
+
+### 3.2 核心组件
+
+#### 3.2.1 对话管理器 (DialogManager)
+
+**职责**：
+
+- 管理对话状态
+- 路由用户消息到合适的处理器
+- 维护对话上下文
+
+#### 3.2.2 意图识别器 (IntentRecognizer)
+
+**职责**：
+
+- 识别用户询问类型
+- 提取关键信息（商品ID、价格等）
+- 触发对应的回复策略
+
+#### 3.2.4 Redis缓存中间件 (CacheMiddleware)
+
+**职责**：
+
+- 缓存AI API响应，减少重复调用
+- 缓存用户信用卡信息，提升查询速度
+- 管理对话上下文状态
+- 缓存常见问题答案
+
+#### 3.2.5 对话上下文管理器 (ContextManager)
+
+**职责**：
+
+- 维护用户对话会话状态
+- 记录用户浏览商品历史
+- 跟踪信用卡推广次数
+- 智能关联上下文信息
+
+### 3.3 数据库设计
+
+#### 3.3.1 MySQL表结构
+
+```sql
+-- 客服对话记录表
+CREATE TABLE customer_service_chat (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT,
+    session_id VARCHAR(64),
+    user_message TEXT,
+    bot_response TEXT,
+    intent_type VARCHAR(32),
+    cache_hit BOOLEAN DEFAULT FALSE,
+    response_time_ms INT,
+    created_time DATETIME,
+    INDEX idx_user_session (user_id, session_id),
+    INDEX idx_created_time (created_time)
+);
+
+-- 用户信用卡信息表
+CREATE TABLE user_credit_card (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT,
+    card_level ENUM('GOLD', 'PLATINUM', 'DIAMOND'),
+    points_balance INT DEFAULT 0,
+    points_expiring INT DEFAULT 0,
+    expiring_date DATE,
+    credit_limit DECIMAL(10,2),
+    bill_date INT,
+    due_date INT,
+    created_time DATETIME,
+    updated_time DATETIME,
+    UNIQUE KEY uk_user_id (user_id)
+);
+
+-- FAQ知识库表
+CREATE TABLE faq_knowledge (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    question VARCHAR(255),
+    answer TEXT,
+    category VARCHAR(32),
+    credit_card_promotion TEXT,
+    hit_count INT DEFAULT 0,
+    status TINYINT DEFAULT 1,
+    INDEX idx_category (category)
+);
+
+-- 用户行为分析表
+CREATE TABLE user_behavior_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT,
+    session_id VARCHAR(64),
+    action_type VARCHAR(32),
+    action_data JSON,
+    created_time DATETIME,
+    INDEX idx_user_time (user_id, created_time),
+    INDEX idx_action_type (action_type)
+);
+```
+
+#### 3.3.2 Redis数据结构设计
+
+##### 缓存策略
+
+```
+1. AI响应缓存
+   Key: ai_response:{md5(question+context)}
+   Value: AI响应内容 (String)
+   TTL: 1小时
+
+2. 用户信用卡信息缓存
+   Key: user_card:{userId}
+   Value: UserCreditCard对象 (Hash)
+   TTL: 10分钟
+
+3. 对话上下文缓存
+   Key: chat_context:{sessionId}
+   Value: ChatContext对象 (Hash)
+   TTL: 30分钟
+
+4. FAQ缓存
+   Key: faq:{keyword}
+   Value: FAQ列表 (List)
+   TTL: 1天
+
+5. 用户行为统计缓存
+   Key: user_stats:{userId}:{date}
+   Value: 行为统计数据 (Hash)
+   TTL: 7天
+
+6. 热门问题缓存
+   Key: hot_questions:{date}
+   Value: 问题列表 (ZSet，按热度排序)
+   TTL: 1天
+```
+
+##### Redis配置示例
+
+```yaml
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+```
+
+## 四、接口设计
+
+### 4.1 核心API接口
+
+#### 4.1.1 发送消息接口
+
+```java
+POST /api/customer-service/chat
+
+Request:
+{
+    "userId": 12345,
+    "sessionId": "session_abc123",
+    "message": "这个商品可以分期吗？",
+    "context": {
+        "productId": 67890,
+        "productPrice": 4999,
+        "currentPage": "product_detail"
+    }
+}
+
+Response:
+{
+    "code": 200,
+    "data": {
+        "responseId": "resp_123",
+        "message": "当然可以分期！使用招行信用卡...",
+        "suggestions": ["了解更多权益", "立即使用信用卡支付"],
+        "promotionInfo": {
+            "type": "credit_card_benefits",
+            "pointsEarned": 288,
+            "discountAmount": 50.0,
+            "installmentOptions": [6, 12, 24]
+        }
+    }
+}
+```
+
+#### 4.1.2 获取用户信用卡信息接口
+
+```java
+GET /api/user/credit-card-info/{userId}
+
+Response:
+{
+    "code": 200,
+    "data": {
+        "cardLevel": "PLATINUM",
+        "pointsBalance": 8500,
+        "pointsExpiring": 2000,
+        "expiringDate": "2024-04-15",
+        "availableCredit": 45000.00,
+        "nextBillDate": "2024-04-10"
+    }
+}
+```
+
+### 4.2 AI服务集成与缓存优化
+
+#### 4.2.1 智能缓存服务
+
+```java
+@Service
+public class CacheOptimizedAIService {
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    @Autowired
+    private AIServiceClient aiServiceClient;
+    
+    private static final String AI_CACHE_PREFIX = "ai_response:";
+    private static final String CONTEXT_PREFIX = "chat_context:";
+    
+    public AIResponse getCachedOrFreshResponse(String question, ChatContext context) {
+        // 1. 构建缓存key
+        String cacheKey = buildCacheKey(question, context);
+        
+        // 2. 检查缓存
+        AIResponse cachedResponse = (AIResponse) redisTemplate.opsForValue().get(cacheKey);
+        if (cachedResponse != null) {
+            log.info("Cache hit for question: {}", question);
+            return cachedResponse;
+        }
+        
+        // 3. 调用AI服务
+        AIResponse freshResponse = aiServiceClient.chat(question, context);
+        
+        // 4. 缓存结果
+        redisTemplate.opsForValue().set(cacheKey, freshResponse, 1, TimeUnit.HOURS);
+        
+        return freshResponse;
+    }
+    
+    private String buildCacheKey(String question, ChatContext context) {
+        String contextData = String.format("%s_%s_%s", 
+            context.getUserId(),
+            context.getCurrentProductId(),
+            context.getCurrentIntent());
+        return AI_CACHE_PREFIX + DigestUtils.md5Hex(question + contextData);
+    }
+}
+```
+
+#### 4.2.2 对话上下文管理服务
+
+```java
+@Service
+public class ContextManagementService {
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    private static final String CONTEXT_PREFIX = "chat_context:";
+    private static final int CONTEXT_TTL_MINUTES = 30;
+    
+    public void saveContext(String sessionId, ChatContext context) {
+        String key = CONTEXT_PREFIX + sessionId;
+        
+        // 保存到Redis
+        redisTemplate.opsForHash().putAll(key, buildContextMap(context));
+        redisTemplate.expire(key, CONTEXT_TTL_MINUTES, TimeUnit.MINUTES);
+        
+        log.debug("Context saved for session: {}", sessionId);
+    }
+    
+    public ChatContext loadContext(String sessionId) {
+        String key = CONTEXT_PREFIX + sessionId;
+        Map<Object, Object> contextMap = redisTemplate.opsForHash().entries(key);
+        
+        if (contextMap.isEmpty()) {
+            return new ChatContext(sessionId);
+        }
+        
+        return buildContextFromMap(contextMap);
+    }
+    
+    public void updateProductInterest(String sessionId, Long productId, BigDecimal price) {
+        String key = CONTEXT_PREFIX + sessionId;
+        redisTemplate.opsForHash().put(key, "currentProductId", productId);
+        redisTemplate.opsForHash().put(key, "currentProductPrice", price);
+        redisTemplate.opsForHash().put(key, "lastActivity", System.currentTimeMillis());
+        
+        // 重新设置过期时间
+        redisTemplate.expire(key, CONTEXT_TTL_MINUTES, TimeUnit.MINUTES);
+    }
+    
+    public void incrementPromotionAttempts(String sessionId) {
+        String key = CONTEXT_PREFIX + sessionId;
+        redisTemplate.opsForHash().increment(key, "promotionAttempts", 1);
+    }
+    
+    private Map<String, Object> buildContextMap(ChatContext context) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("sessionId", context.getSessionId());
+        map.put("userId", context.getUserId());
+        map.put("currentProductId", context.getCurrentProductId());
+        map.put("currentProductPrice", context.getCurrentProductPrice());
+        map.put("currentIntent", context.getCurrentIntent());
+        map.put("promotionAttempts", context.getPromotionAttempts());
+        map.put("creditCardPromoted", context.isCreditCardPromoted());
+        map.put("lastActivity", System.currentTimeMillis());
+        return map;
+    }
+}
+```
+
+#### 4.2.3 用户信用卡信息缓存服务
+
+```java
+@Service
+public class UserCreditCardCacheService {
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    @Autowired
+    private UserCreditCardRepository cardRepository;
+    
+    private static final String USER_CARD_PREFIX = "user_card:";
+    private static final int CARD_CACHE_TTL_MINUTES = 10;
+    
+    public UserCreditCard getUserCreditCard(Long userId) {
+        String key = USER_CARD_PREFIX + userId;
+        
+        // 先从缓存获取
+        UserCreditCard cachedCard = (UserCreditCard) redisTemplate.opsForValue().get(key);
+        if (cachedCard != null) {
+            return cachedCard;
+        }
+        
+        // 缓存未命中，从数据库查询
+        UserCreditCard dbCard = cardRepository.findByUserId(userId);
+        if (dbCard != null) {
+            // 缓存到Redis
+            redisTemplate.opsForValue().set(key, dbCard, CARD_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        }
+        
+        return dbCard;
+    }
+    
+    public void updateUserCard(UserCreditCard userCard) {
+        // 更新数据库
+        cardRepository.save(userCard);
+        
+        // 更新缓存
+        String key = USER_CARD_PREFIX + userCard.getUserId();
+        redisTemplate.opsForValue().set(key, userCard, CARD_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+    }
+    
+    public void invalidateUserCard(Long userId) {
+        String key = USER_CARD_PREFIX + userId;
+        redisTemplate.delete(key);
+    }
+}
+```
+
+## 五、开发任务分解
+
+### 5.1 Phase 1：基础框架搭建（3天）
+
+#### 后端任务：
+
+1. **创建客服模块基础结构**
+   - 创建controller、service、entity包
+   - 设计基础的对话管理类
+   - 配置AI服务客户端
+2. **Redis中间件集成**
+   - 添加Spring Boot Redis依赖
+   - 配置Redis连接参数
+   - 创建RedisTemplate配置类
+   - 实现基础缓存服务类
+3. **数据库表创建**
+   - 执行DDL脚本创建新表
+   - 初始化FAQ知识库数据
+   - 创建测试用户信用卡数据
+   - 添加缓存相关字段
+4. **核心接口开发**
+   - 实现聊天消息发送接口
+   - 实现用户信用卡信息查询接口（含缓存）
+   - 添加基本的异常处理
+   - 集成Redis缓存检查
+
+#### 前端任务：
+
+1. **客服聊天组件开发**
+   - 创建聊天窗口组件
+   - 实现消息发送和展示
+   - 添加打字机效果
+   - 显示缓存命中状态（开发调试用）
+2. **集成到现有页面**
+   - 在商品详情页添加客服入口
+   - 在支付页面添加客服按钮
+   - 实现客服窗口的显示/隐藏
+   - 传递商品上下文信息
+
+### 5.2 Phase 2：AI功能集成与缓存优化（4天）
+
+#### 后端任务：
+
+1. **智能缓存系统实现**
+   - 实现AI响应缓存逻辑
+   - 开发缓存key生成策略
+   - 添加缓存命中率统计
+   - 实现缓存预热机制
+2. **对话上下文管理**
+   - 实现会话状态持久化（Redis）
+   - 开发上下文智能关联算法
+   - 添加会话超时管理
+   - 实现跨页面上下文传递
+3. **意图识别与响应生成**
+   - 集成豆包/通义千问API
+   - 实现基本意图分类（带缓存）
+   - 建立意图与回复的映射关系
+   - 添加降级处理机制
+4. **信用卡推广引擎**
+   - 实现权益计算逻辑
+   - 开发个性化推广内容生成
+   - 添加心理激励策略
+   - 实现推广频次控制（Redis计数）
+5. **知识库管理**
+   - 导入常见FAQ数据
+   - 实现模糊匹配搜索（带缓存）
+   - 添加信用卡相关问答
+   - 实现热门问题统计
+
+#### 前端任务：
+
+1. **增强聊天体验**
+   - 添加快捷回复按钮
+   - 实现信用卡权益展示组件
+   - 添加支付方式对比展示
+   - 显示响应时间优化效果
+2. **上下文感知优化**
+   - 传递当前页面信息
+   - 传递商品信息给客服
+   - 实现购物车信息同步
+   - 添加会话恢复功能
+
+### 5.3 Phase 3：性能优化与监控（3天）
+
+#### 后端任务：
+
+1. **缓存性能优化**
+   - 优化缓存策略和TTL设置
+   - 实现缓存预加载
+   - 添加缓存降级机制
+   - 实现分布式缓存一致性
+2. **系统性能优化**
+   - 添加Redis连接池优化
+   - 优化数据库查询
+   - 添加限流保护
+   - 实现异步处理机制
+3. **监控与统计**
+   - 添加Redis监控指标
+   - 实现缓存命中率统计
+   - 添加对话效果统计
+   - 实现信用卡推广转化率统计
+   - 添加用户行为分析
+4. **数据分析功能**
+   - 实现用户画像更新（Redis）
+   - 添加热门问题分析
+   - 实现A/B测试数据收集
+   - 开发推广效果dashboard
+
+#### 前端任务：
+
+1. **用户体验优化**
+   - 添加loading状态优化
+   - 优化移动端显示
+   - 添加客服满意度评价
+   - 实现离线消息缓存
+2. **测试与调试**
+   - 完整功能测试
+   - 缓存一致性测试
+   - 边界情况处理
+   - 性能压力测试
+
+## 六、成功指标
+
+### 6.1 技术指标
+
+- 客服响应时间 < 1秒（缓存命中时 < 200ms）
+- Redis缓存命中率 > 60%
+- AI API调用减少 > 50%
+- 意图识别准确率 > 85%
+- 系统可用性 > 99%
+- Redis内存使用率 < 80%
+
+## 七、风险控制
+
+### 7.1 技术风险
+
+- **AI服务不稳定**：准备备用API，实现降级方案
+- **Redis服务异常**：实现本地缓存降级，确保基础功能可用
+- **缓存数据不一致**：建立缓存更新机制，定期同步数据
+- **响应时间过长**：添加多级缓存机制，预置常见回复
+- **意图识别错误**：建立人工干预机制
+- **内存使用过高**：监控Redis内存，实现缓存清理策略
+
+## 九、Redis集成实施指南
+
+### 9.1 依赖配置
+
+```xml
+<!-- pom.xml -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-pool2</artifactId>
+</dependency>
+```
+
+### 9.2 Redis配置类
+
+```java
+@Configuration
+@EnableCaching
+public class RedisConfig {
+    
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        
+        // 设置序列化器
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        
+        template.afterPropertiesSet();
+        return template;
+    }
+    
+    @Bean
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
+        RedisCacheManager.Builder builder = RedisCacheManager
+            .RedisCacheManagerBuilder
+            .fromConnectionFactory(factory)
+            .cacheDefaults(cacheConfiguration());
+        
+        return builder.build();
+    }
+    
+    private RedisCacheConfiguration cacheConfiguration() {
+        return RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMinutes(30))
+            .serializeKeysWith(RedisSerializationContext.SerializationPair
+                .fromSerializer(new StringRedisSerializer()))
+            .serializeValuesWith(RedisSerializationContext.SerializationPair
+                .fromSerializer(new GenericJackson2JsonRedisSerializer()));
+    }
+}
+```
+
+### 9.3 缓存使用示例
+
+```java
+@Service
+public class CustomerServiceService {
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    // 使用注解式缓存
+    @Cacheable(value = "ai_responses", key = "#question.hashCode()")
+    public String getAIResponse(String question) {
+        return callAIAPI(question);
+    }
+    
+    // 手动缓存操作
+    public ChatContext getOrCreateContext(String sessionId) {
+        String key = "chat_context:" + sessionId;
+        ChatContext context = (ChatContext) redisTemplate.opsForValue().get(key);
+        
+        if (context == null) {
+            context = new ChatContext(sessionId);
+            redisTemplate.opsForValue().set(key, context, 30, TimeUnit.MINUTES);
+        }
+        
+        return context;
+    }
+    
+    // 用户行为统计
+    public void trackUserBehavior(Long userId, String action) {
+        String key = "user_behavior:" + userId + ":" + LocalDate.now();
+        redisTemplate.opsForHash().increment(key, action, 1);
+        redisTemplate.expire(key, 7, TimeUnit.DAYS);
+    }
+}
+```
+
+### 9.4 监控与维护
+
+```java
+@Component
+public class RedisMonitor {
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    @Scheduled(fixedRate = 60000) // 每分钟检查一次
+    public void monitorRedisHealth() {
+        try {
+            redisTemplate.opsForValue().get("health_check");
+            log.info("Redis健康检查通过");
+        } catch (Exception e) {
+            log.error("Redis连接异常: {}", e.getMessage());
+            // 触发告警
+        }
+    }
+    
+    public Map<String, Object> getCacheStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // 获取Redis信息
+        Properties info = redisTemplate.getConnectionFactory()
+            .getConnection().info("memory");
+        
+        stats.put("usedMemory", info.getProperty("used_memory_human"));
+        stats.put("maxMemory", info.getProperty("maxmemory_human"));
+        
+        return stats;
+    }
+}
+```
+

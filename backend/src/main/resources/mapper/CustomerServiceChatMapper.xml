@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luckymall.mapper.CustomerServiceChatMapper">
+    
+    <resultMap id="BaseResultMap" type="com.luckymall.entity.CustomerServiceChat">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="user_message" property="userMessage"/>
+        <result column="bot_response" property="botResponse"/>
+        <result column="intent_type" property="intentType"/>
+        <result column="cache_hit" property="cacheHit"/>
+        <result column="response_time_ms" property="responseTimeMs"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.luckymall.entity.CustomerServiceChat">
+        INSERT INTO customer_service_chat (
+            user_id, session_id, user_message, bot_response, 
+            intent_type, cache_hit, response_time_ms, created_time
+        ) VALUES (
+            #{userId}, #{sessionId}, #{userMessage}, #{botResponse},
+            #{intentType}, #{cacheHit}, #{responseTimeMs}, #{createdTime}
+        )
+    </insert>
+    
+    <select id="findByUserIdAndSessionId" resultMap="BaseResultMap">
+        SELECT * FROM customer_service_chat 
+        WHERE user_id = #{userId} AND session_id = #{sessionId}
+        ORDER BY created_time ASC
+    </select>
+    
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM customer_service_chat 
+        WHERE user_id = #{userId}
+        ORDER BY created_time DESC
+        LIMIT 50
+    </select>
+    
+</mapper> 

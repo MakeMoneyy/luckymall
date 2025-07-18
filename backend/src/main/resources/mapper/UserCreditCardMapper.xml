@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luckymall.mapper.UserCreditCardMapper">
+    
+    <resultMap id="BaseResultMap" type="com.luckymall.entity.UserCreditCard">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="card_level" property="cardLevel"/>
+        <result column="points_balance" property="pointsBalance"/>
+        <result column="points_expiring" property="pointsExpiring"/>
+        <result column="expiring_date" property="expiringDate"/>
+        <result column="credit_limit" property="creditLimit"/>
+        <result column="bill_date" property="billDate"/>
+        <result column="due_date" property="dueDate"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+    
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM user_credit_card WHERE user_id = #{userId}
+    </select>
+    
+    <insert id="insert" parameterType="com.luckymall.entity.UserCreditCard">
+        INSERT INTO user_credit_card (
+            user_id, card_level, points_balance, points_expiring, 
+            expiring_date, credit_limit, bill_date, due_date
+        ) VALUES (
+            #{userId}, #{cardLevel}, #{pointsBalance}, #{pointsExpiring},
+            #{expiringDate}, #{creditLimit}, #{billDate}, #{dueDate}
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.luckymall.entity.UserCreditCard">
+        UPDATE user_credit_card SET
+            card_level = #{cardLevel},
+            points_balance = #{pointsBalance},
+            points_expiring = #{pointsExpiring},
+            expiring_date = #{expiringDate},
+            credit_limit = #{creditLimit},
+            bill_date = #{billDate},
+            due_date = #{dueDate},
+            updated_time = NOW()
+        WHERE user_id = #{userId}
+    </update>
+    
+</mapper> 
