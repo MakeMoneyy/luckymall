@@ -322,6 +322,38 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
         }
         record.setBotResponse(botResponse);
         
+        // 设置意图识别和情感分析相关字段
+        // 这些字段可能来自请求上下文或其他地方
+        if (request.getContext() != null) {
+            if (request.getContext().containsKey("intentType")) {
+                record.setIntentType((String) request.getContext().get("intentType"));
+            }
+            if (request.getContext().containsKey("recognizedIntent")) {
+                record.setRecognizedIntent((String) request.getContext().get("recognizedIntent"));
+            }
+            if (request.getContext().containsKey("extractedEntities")) {
+                record.setExtractedEntities((String) request.getContext().get("extractedEntities"));
+            }
+            if (request.getContext().containsKey("emotionType")) {
+                record.setEmotionType((String) request.getContext().get("emotionType"));
+            }
+            if (request.getContext().containsKey("emotionIntensity")) {
+                Object intensity = request.getContext().get("emotionIntensity");
+                if (intensity instanceof Integer) {
+                    record.setEmotionIntensity((Integer) intensity);
+                } else if (intensity instanceof String) {
+                    try {
+                        record.setEmotionIntensity(Integer.parseInt((String) intensity));
+                    } catch (NumberFormatException e) {
+                        // 忽略转换错误
+                    }
+                }
+            }
+            if (request.getContext().containsKey("transferredToHuman")) {
+                record.setTransferredToHuman((Boolean) request.getContext().get("transferredToHuman"));
+            }
+        }
+        
         record.setCacheHit(cacheHit);
         record.setResponseTimeMs(responseTime);
         record.setCreatedTime(LocalDateTime.now());

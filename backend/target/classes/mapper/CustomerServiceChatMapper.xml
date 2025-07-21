@@ -9,6 +9,11 @@
         <result column="user_message" property="userMessage"/>
         <result column="bot_response" property="botResponse"/>
         <result column="intent_type" property="intentType"/>
+        <result column="recognized_intent" property="recognizedIntent"/>
+        <result column="extracted_entities" property="extractedEntities"/>
+        <result column="emotion_type" property="emotionType"/>
+        <result column="emotion_intensity" property="emotionIntensity"/>
+        <result column="transferred_to_human" property="transferredToHuman"/>
         <result column="cache_hit" property="cacheHit"/>
         <result column="response_time_ms" property="responseTimeMs"/>
         <result column="created_time" property="createdTime"/>
@@ -17,10 +22,14 @@
     <insert id="insert" parameterType="com.luckymall.entity.CustomerServiceChat">
         INSERT INTO customer_service_chat (
             user_id, session_id, user_message, bot_response, 
-            intent_type, cache_hit, response_time_ms, created_time
+            intent_type, recognized_intent, extracted_entities,
+            emotion_type, emotion_intensity, transferred_to_human,
+            cache_hit, response_time_ms, created_time
         ) VALUES (
             #{userId}, #{sessionId}, #{userMessage}, #{botResponse},
-            #{intentType}, #{cacheHit}, #{responseTimeMs}, #{createdTime}
+            #{intentType}, #{recognizedIntent}, #{extractedEntities},
+            #{emotionType}, #{emotionIntensity}, #{transferredToHuman},
+            #{cacheHit}, #{responseTimeMs}, #{createdTime}
         )
     </insert>
     

@@ -11,6 +11,11 @@ public class CustomerServiceChat {
     private String userMessage;
     private String botResponse;
     private String intentType;
+    private String recognizedIntent;
+    private String extractedEntities;
+    private String emotionType;
+    private Integer emotionIntensity;
+    private Boolean transferredToHuman = false;
     private Boolean cacheHit = false;
     private Integer responseTimeMs;
     private LocalDateTime createdTime;

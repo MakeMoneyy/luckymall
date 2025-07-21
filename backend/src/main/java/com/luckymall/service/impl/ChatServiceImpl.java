@@ -8,19 +8,30 @@ import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.luckymall.config.DashScopeConfig;
 import com.luckymall.dto.ChatContext;
 import com.luckymall.dto.ChatRequest;
 import com.luckymall.dto.ChatResponse;
+import com.luckymall.dto.EmotionAnalysisResult;
+import com.luckymall.dto.IntentRecognitionResult;
+import com.luckymall.entity.CustomerServiceChat;
+import com.luckymall.entity.HumanServiceSession;
 import com.luckymall.service.ChatService;
 import com.luckymall.service.ChatSessionService;
+import com.luckymall.service.EmotionAnalysisService;
+import com.luckymall.service.HumanServiceTransferService;
+import com.luckymall.service.IntentRecognitionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 聊天服务实现类
@@ -37,6 +48,17 @@ public class ChatServiceImpl implements ChatService {
     
     @Autowired
     private ChatSessionService chatSessionService;
+    
+    @Autowired
+    private IntentRecognitionService intentRecognitionService;
+    
+    @Autowired
+    private EmotionAnalysisService emotionAnalysisService;
+    
+    @Autowired
+    private HumanServiceTransferService humanServiceTransferService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 处理聊天请求
@@ -52,6 +74,51 @@ public class ChatServiceImpl implements ChatService {
         ChatContext context = chatSessionService.getSessionContext(
                 request.getUserId(), 
                 request.getSessionId());
+        
+        // 进行情感分析
+        EmotionAnalysisResult emotionResult = emotionAnalysisService.analyzeEmotion(request.getMessage(), context);
+        log.debug("情感分析结果: type={}, intensity={}", emotionResult.getEmotionType(), emotionResult.getEmotionIntensity());
+        
+        // 检查是否需要转人工客服
+        boolean needHumanService = emotionAnalysisService.shouldTransferToHuman(emotionResult, context);
+        if (needHumanService) {
+            log.info("检测到需要转人工客服: userId={}, sessionId={}", request.getUserId(), request.getSessionId());
+            
+            // 创建人工客服会话
+            try {
+                Long userId = Long.parseLong(request.getUserId());
+                HumanServiceSession humanSession = humanServiceTransferService.createHumanServiceSession(
+                        userId, 
+                        request.getSessionId(), 
+                        request.getSessionId(), 
+                        "情绪异常，系统自动转接", 
+                        emotionResult);
+                
+                // 传递历史对话
+                humanServiceTransferService.transferChatHistory(userId, request.getSessionId(), request.getSessionId());
+                
+                // 分配客服
+                humanServiceTransferService.assignStaff(request.getSessionId());
+                
+                // 返回转人工提示
+                return ChatResponse.builder()
+                        .result("我注意到您可能遇到了一些问题。为了更好地帮助您，我已将您的对话转接给人工客服。" +
+                                "客服正在赶来的路上，请稍候片刻。")
+                        .sessionId(request.getSessionId())
+                        .responseTime(System.currentTimeMillis() - startTime)
+                        .cacheHit(false)
+                        .build();
+            } catch (NumberFormatException e) {
+                log.error("用户ID格式错误，无法转人工: {}", request.getUserId());
+                // 继续AI对话流程
+            }
+        }
+        
+        // 进行意图识别
+        IntentRecognitionResult intentResult = intentRecognitionService.recognizeIntent(request.getMessage(), context);
+        log.debug("意图识别结果: type={}, confidence={}", 
+                intentResult.getIntentType(), 
+                intentResult.getConfidence());
         
         // 检查用户消息是否包含拒绝推广的关键词
         String userMessage = request.getMessage().toLowerCase();
@@ -78,6 +145,11 @@ public class ChatServiceImpl implements ChatService {
         
         if (cachedResponse != null) {
             log.info("使用缓存的响应: userId={}, sessionId={}", request.getUserId(), request.getSessionId());
+            
+            // 记录意图和情感分析结果
+            recordAnalysisResults(request, cachedResponse, intentResult, emotionResult, true, 
+                    (int)(System.currentTimeMillis() - startTime));
+            
             return cachedResponse;
         }
         
@@ -166,10 +238,10 @@ public class ChatServiceImpl implements ChatService {
                     .content(request.getMessage())
                     .build();
             
-            // 添加会话上下文信息
+            // 添加会话上下文信息，包括意图识别和情感分析结果
             Message contextMsg = Message.builder()
                     .role(Role.SYSTEM.getValue())
-                    .content(buildContextPrompt(context))
+                    .content(buildEnhancedContextPrompt(context, intentResult, emotionResult))
                     .build();
             
             // 构建请求参数
@@ -201,6 +273,10 @@ public class ChatServiceImpl implements ChatService {
                     .cacheHit(false)
                     .build();
             
+            // 记录意图和情感分析结果
+            recordAnalysisResults(request, response, intentResult, emotionResult, false, 
+                    (int)responseTime);
+            
             // 缓存响应
             chatCacheService.saveToCache(
                     request.getUserId(), 
@@ -231,12 +307,16 @@ public class ChatServiceImpl implements ChatService {
     }
     
     /**
-     * 构建上下文提示信息
+     * 构建增强的上下文提示信息，包含意图识别和情感分析结果
      * 
      * @param context 会话上下文
+     * @param intentResult 意图识别结果
+     * @param emotionResult 情感分析结果
      * @return 上下文提示信息
      */
-    private String buildContextPrompt(ChatContext context) {
+    private String buildEnhancedContextPrompt(ChatContext context, 
+                                             IntentRecognitionResult intentResult, 
+                                             EmotionAnalysisResult emotionResult) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("当前会话上下文信息：\n");
         
@@ -258,11 +338,85 @@ public class ChatServiceImpl implements ChatService {
             prompt.append("- 当前浏览商品：").append(context.getCurrentProductName()).append("\n");
         }
         
+        // 添加意图识别结果
+        if (intentResult != null && intentResult.getIntentType() != null) {
+            prompt.append("- 用户意图：").append(intentResult.getIntentType().getDescription())
+                  .append("（置信度：").append(intentResult.getConfidence()).append("）\n");
+            
+            // 添加提取的实体信息
+            Map<String, Object> entities = intentResult.getExtractedEntities();
+            if (entities != null && !entities.isEmpty()) {
+                prompt.append("- 提取的实体信息：\n");
+                for (Map.Entry<String, Object> entry : entities.entrySet()) {
+                    prompt.append("  • ").append(entry.getKey()).append(": ")
+                          .append(entry.getValue()).append("\n");
+                }
+            }
+        }
+        
+        // 添加情感分析结果
+        if (emotionResult != null) {
+            prompt.append("- 用户情绪：");
+            switch (emotionResult.getEmotionType()) {
+                case "POSITIVE":
+                    prompt.append("正面");
+                    break;
+                case "NEGATIVE":
+                    prompt.append("负面");
+                    break;
+                default:
+                    prompt.append("中性");
+            }
+            prompt.append("（强度：").append(emotionResult.getEmotionIntensity()).append("/5）\n");
+            
+            // 添加情绪关键词
+            List<String> keywords = emotionResult.getEmotionKeywords();
+            if (keywords != null && !keywords.isEmpty()) {
+                prompt.append("- 情绪关键词：").append(String.join(", ", keywords)).append("\n");
+            }
+            
+            // 添加情绪变化趋势
+            if (context.getEmotionTrend() != null) {
+                prompt.append("- 情绪变化趋势：");
+                switch (context.getEmotionTrend()) {
+                    case "IMPROVING":
+                        prompt.append("改善中");
+                        break;
+                    case "DETERIORATING":
+                        prompt.append("恶化中");
+                        break;
+                    default:
+                        prompt.append("稳定");
+                }
+                prompt.append("\n");
+            }
+        }
+        
+        // 添加对话主题
+        if (context.getCurrentTopic() != null && !context.getCurrentTopic().isEmpty()) {
+            prompt.append("- 当前对话主题：").append(context.getCurrentTopic()).append("\n");
+        }
+        
         // 添加推广控制指令
+        prompt.append("\n回复策略指导：\n");
+        
         if (context.isPromotionRejected()) {
-            prompt.append("\n重要提示：用户已明确拒绝推广，请不要再推广信用卡支付，专注于回答用户问题。\n");
+            prompt.append("- 用户已明确拒绝推广，请不要再推广信用卡支付，专注于回答用户问题。\n");
         } else if (context.getPromotionCount() >= 2) {
-            prompt.append("\n重要提示：当前会话已达到最大推广次数(2次)，请不要再推广信用卡支付，专注于回答用户问题。\n");
+            prompt.append("- 当前会话已达到最大推广次数(2次)，请不要再推广信用卡支付，专注于回答用户问题。\n");
+        }
+        
+        // 根据情绪调整回复策略
+        if (emotionResult != null) {
+            if ("NEGATIVE".equals(emotionResult.getEmotionType())) {
+                if (emotionResult.getEmotionIntensity() <= 2) {
+                    prompt.append("- 用户情绪较为负面，请使用更加温和、理解和同理的语气，避免推广，专注解决用户问题。\n");
+                } else {
+                    prompt.append("- 用户情绪略显负面，请保持耐心，先解决用户问题，再考虑是否适合推广。\n");
+                }
+            } else if ("POSITIVE".equals(emotionResult.getEmotionType()) && emotionResult.getEmotionIntensity() >= 4) {
+                prompt.append("- 用户情绪积极，可以适当推广信用卡支付，但仍需注意不要过度。\n");
+            }
         }
         
         return prompt.toString();
@@ -279,5 +433,63 @@ public class ChatServiceImpl implements ChatService {
         return lowerContent.contains("信用卡") && 
                (lowerContent.contains("积分") || lowerContent.contains("分期") || 
                 lowerContent.contains("优惠") || lowerContent.contains("权益"));
+    }
+    
+    /**
+     * 记录意图识别和情感分析结果
+     * 
+     * @param request 聊天请求
+     * @param response 聊天响应
+     * @param intentResult 意图识别结果
+     * @param emotionResult 情感分析结果
+     * @param cacheHit 是否命中缓存
+     * @param responseTime 响应时间
+     */
+    private void recordAnalysisResults(ChatRequest request, ChatResponse response, 
+                                      IntentRecognitionResult intentResult, 
+                                      EmotionAnalysisResult emotionResult,
+                                      boolean cacheHit, int responseTime) {
+        // 记录日志
+        log.debug("记录分析结果: userId={}, sessionId={}, intent={}, emotion={}, cacheHit={}, responseTime={}ms",
+                request.getUserId(), request.getSessionId(), 
+                intentResult != null ? intentResult.getIntentType() : "UNKNOWN",
+                emotionResult != null ? emotionResult.getEmotionType() : "UNKNOWN",
+                cacheHit, responseTime);
+                
+        try {
+            // 将分析结果添加到请求上下文中，以便在保存聊天记录时使用
+            if (request.getContext() == null) {
+                request.setContext(new HashMap<>());
+            }
+            
+            if (intentResult != null) {
+                if (intentResult.getIntentType() != null) {
+                    request.getContext().put("intentType", intentResult.getIntentType().getCode());
+                    request.getContext().put("recognizedIntent", intentResult.getIntentType().getDescription());
+                }
+                
+                if (intentResult.getExtractedEntities() != null && !intentResult.getExtractedEntities().isEmpty()) {
+                    try {
+                        // 将实体信息转换为JSON字符串
+                        String entitiesJson = objectMapper.writeValueAsString(intentResult.getExtractedEntities());
+                        request.getContext().put("extractedEntities", entitiesJson);
+                    } catch (Exception e) {
+                        log.error("实体信息序列化失败: {}", e.getMessage(), e);
+                    }
+                }
+            }
+            
+            if (emotionResult != null) {
+                request.getContext().put("emotionType", emotionResult.getEmotionType());
+                request.getContext().put("emotionIntensity", emotionResult.getEmotionIntensity());
+                request.getContext().put("transferredToHuman", emotionResult.getSuggestHumanService());
+            }
+            
+            // 在实际应用中，这里应该将分析结果记录到数据库
+            // 可以通过调用其他服务或直接操作数据库来实现
+            
+        } catch (Exception e) {
+            log.error("记录分析结果失败: {}", e.getMessage(), e);
+        }
     }
 } 

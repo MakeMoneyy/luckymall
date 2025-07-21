@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 聊天上下文
@@ -80,4 +82,41 @@ public class ChatContext implements Serializable {
      * 最近一次交互的时间戳
      */
     private long lastInteractionTimestamp;
+    
+    /**
+     * 当前对话主题
+     */
+    @Builder.Default
+    private String currentTopic = "";
+    
+    /**
+     * 已识别的实体信息
+     */
+    @Builder.Default
+    private Map<String, Object> recognizedEntities = new HashMap<>();
+    
+    /**
+     * 上一次查询的对象（如订单ID、商品ID等）
+     */
+    private String lastQueryObject;
+    
+    /**
+     * 情绪分析历史
+     */
+    @Builder.Default
+    private List<EmotionAnalysisResult> emotionHistory = new ArrayList<>();
+    
+    /**
+     * 情绪变化趋势
+     * STABLE: 稳定
+     * IMPROVING: 改善
+     * DETERIORATING: 恶化
+     */
+    @Builder.Default
+    private String emotionTrend = "STABLE";
+    
+    /**
+     * 最近一次情绪分析结果
+     */
+    private EmotionAnalysisResult lastEmotionResult;
 } 

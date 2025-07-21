@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luckymall.mapper.HumanServiceSessionMapper">
+    
+    <resultMap id="BaseResultMap" type="com.luckymall.entity.HumanServiceSession">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="ai_session_id" property="aiSessionId"/>
+        <result column="status" property="status"/>
+        <result column="staff_id" property="staffId"/>
+        <result column="transfer_reason" property="transferReason"/>
+        <result column="emotion_data" property="emotionData"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.luckymall.entity.HumanServiceSession">
+        INSERT INTO human_service_session (
+            user_id, session_id, ai_session_id, status, 
+            staff_id, transfer_reason, emotion_data, 
+            created_time, updated_time
+        ) VALUES (
+            #{userId}, #{sessionId}, #{aiSessionId}, #{status},
+            #{staffId}, #{transferReason}, #{emotionData},
+            #{createdTime}, #{updatedTime}
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.luckymall.entity.HumanServiceSession">
+        UPDATE human_service_session
+        SET status = #{status},
+            staff_id = #{staffId},
+            transfer_reason = #{transferReason},
+            emotion_data = #{emotionData},
+            updated_time = #{updatedTime}
+        WHERE session_id = #{sessionId}
+    </update>
+    
+    <select id="findBySessionId" resultMap="BaseResultMap">
+        SELECT * FROM human_service_session 
+        WHERE session_id = #{sessionId}
+    </select>
+    
+    <select id="findByUserIdAndSessionId" resultMap="BaseResultMap">
+        SELECT * FROM human_service_session 
+        WHERE user_id = #{userId} AND session_id = #{sessionId}
+    </select>
+    
+    <select id="findByStatus" resultMap="BaseResultMap">
+        SELECT * FROM human_service_session 
+        WHERE status = #{status}
+        ORDER BY created_time ASC
+    </select>
+    
+    <select id="findByStaffId" resultMap="BaseResultMap">
+        SELECT * FROM human_service_session 
+        WHERE staff_id = #{staffId}
+        ORDER BY created_time DESC
+    </select>
+    
+    <update id="updateStatus">
+        UPDATE human_service_session
+        SET status = #{status},
+            updated_time = NOW()
+        WHERE session_id = #{sessionId}
+    </update>
+    
+    <update id="assignStaff">
+        UPDATE human_service_session
+        SET staff_id = #{staffId},
+            status = 'IN_PROGRESS',
+            updated_time = NOW()
+        WHERE session_id = #{sessionId}
+    </update>
+</mapper> 
