@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后端连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,.3);
+            border-radius: 50%;
+            border-top-color: #000;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>后端连接测试工具</h1>
+    <p>此页面用于测试后端服务连接是否正常。</p>
+    
+    <div class="test-section">
+        <h2>1. 测试后端服务器可访问性</h2>
+        <button id="testServer">测试服务器</button>
+        <div id="serverResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 测试商品API</h2>
+        <button id="testProducts">测试商品API</button>
+        <div id="productsResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 测试购物车API</h2>
+        <button id="testCart">测试购物车API</button>
+        <div id="cartResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 诊断与解决方案</h2>
+        <div id="diagnosis"></div>
+    </div>
+    
+    <script>
+        // 测试服务器可访问性
+        document.getElementById('testServer').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('serverResult');
+            resultDiv.innerHTML = '<div class="loading"></div> 测试中...';
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:8080', {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    timeout: 5000
+                });
+                const endTime = Date.now();
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ 服务器可访问</p>
+                    <p>响应时间: ${endTime - startTime}ms</p>
+                `;
+                updateDiagnosis('server', true);
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ 服务器不可访问</p>
+                    <p>错误信息: ${error.message}</p>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                `;
+                updateDiagnosis('server', false, error);
+            }
+        });
+        
+        // 测试商品API
+        document.getElementById('testProducts').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('productsResult');
+            resultDiv.innerHTML = '<div class="loading"></div> 测试中...';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/products', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-cache',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ 商品API可访问</p>
+                        <p>状态码: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    updateDiagnosis('products', true);
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ 商品API返回错误</p>
+                        <p>状态码: ${response.status}</p>
+                        <p>状态文本: ${response.statusText}</p>
+                    `;
+                    updateDiagnosis('products', false, { status: response.status, statusText: response.statusText });
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ 商品API不可访问</p>
+                    <p>错误信息: ${error.message}</p>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                `;
+                updateDiagnosis('products', false, error);
+            }
+        });
+        
+        // 测试购物车API
+        document.getElementById('testCart').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('cartResult');
+            resultDiv.innerHTML = '<div class="loading"></div> 测试中...';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/cart/1', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-cache',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ 购物车API可访问</p>
+                        <p>状态码: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    updateDiagnosis('cart', true);
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ 购物车API返回错误</p>
+                        <p>状态码: ${response.status}</p>
+                        <p>状态文本: ${response.statusText}</p>
+                    `;
+                    updateDiagnosis('cart', false, { status: response.status, statusText: response.statusText });
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ 购物车API不可访问</p>
+                    <p>错误信息: ${error.message}</p>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                `;
+                updateDiagnosis('cart', false, error);
+            }
+        });
+        
+        // 更新诊断信息
+        function updateDiagnosis(testType, success, error) {
+            const diagnosisDiv = document.getElementById('diagnosis');
+            
+            if (!success) {
+                diagnosisDiv.innerHTML = `
+                    <h3>诊断结果</h3>
+                    <p class="error">检测到问题:</p>
+                    <ul>
+                        ${testType === 'server' ? '<li>后端服务器不可访问，可能未启动或端口被占用</li>' : ''}
+                        ${testType === 'products' ? '<li>商品API不可访问，可能是API路径错误或后端服务异常</li>' : ''}
+                        ${testType === 'cart' ? '<li>购物车API不可访问，可能是API路径错误或后端服务异常</li>' : ''}
+                    </ul>
+                    
+                    <h3>可能的解决方案:</h3>
+                    <ol>
+                        <li>确保后端服务已启动，可以通过运行 <code>start_project.bat</code> 或 <code>cd backend && mvn spring-boot:run</code> 来启动</li>
+                        <li>确保MySQL数据库已启动，并且配置正确（用户名: root, 密码: 123456）</li>
+                        <li>确保数据库 'lucky_mall' 已创建，可以运行 <code>database/create_database.sql</code> 脚本创建</li>
+                        <li>检查8080端口是否被其他应用占用，可以通过任务管理器或命令 <code>netstat -ano | findstr :8080</code> 查看</li>
+                        <li>检查防火墙设置，确保允许8080端口的访问</li>
+                        <li>检查后端日志，查看是否有启动错误</li>
+                    </ol>
+                `;
+            } else {
+                diagnosisDiv.innerHTML = `
+                    <h3>诊断结果</h3>
+                    <p class="success">测试通过! 后端服务运行正常。</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 
