@@ -1,0 +1,356 @@
+给<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>订单管理器</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      margin-top: 0;
+      color: #333;
+    }
+    .button-group {
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 8px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .primary {
+      background-color: #1890ff;
+      color: white;
+    }
+    .danger {
+      background-color: #ff4d4f;
+      color: white;
+    }
+    .default {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    .order-list {
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+    }
+    .order-item {
+      padding: 16px;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .order-item:last-child {
+      border-bottom: none;
+    }
+    .order-info {
+      flex: 1;
+    }
+    .order-id {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .order-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status-PENDING_PAYMENT {
+      background-color: #faad14;
+      color: white;
+    }
+    .status-PAID {
+      background-color: #1890ff;
+      color: white;
+    }
+    .status-SHIPPED {
+      background-color: #13c2c2;
+      color: white;
+    }
+    .status-COMPLETED {
+      background-color: #52c41a;
+      color: white;
+    }
+    .status-CANCELLED {
+      background-color: #ff4d4f;
+      color: white;
+    }
+    .order-actions {
+      display: flex;
+    }
+    .json-editor {
+      width: 100%;
+      height: 300px;
+      margin-top: 20px;
+      font-family: monospace;
+      padding: 10px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+    }
+    .message {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #f6ffed;
+      border: 1px solid #b7eb8f;
+      color: #52c41a;
+    }
+    .error {
+      background-color: #fff2f0;
+      border: 1px solid #ffccc7;
+      color: #ff4d4f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>订单管理器</h1>
+    
+    <div id="message" style="display: none;"></div>
+    
+    <div class="button-group">
+      <button class="primary" onclick="createTestOrder()">创建测试订单</button>
+      <button class="danger" onclick="clearOrders()">清空所有订单</button>
+      <button class="default" onclick="location.href='/'">返回首页</button>
+    </div>
+    
+    <div id="orderList" class="order-list">
+      <div style="padding: 20px; text-align: center;">加载中...</div>
+    </div>
+    
+    <h2>手动编辑订单数据</h2>
+    <textarea id="jsonEditor" class="json-editor"></textarea>
+    <div class="button-group" style="margin-top: 10px;">
+      <button class="primary" onclick="saveJsonData()">保存更改</button>
+      <button class="default" onclick="loadJsonData()">重新加载</button>
+    </div>
+  </div>
+
+  <script>
+    // 显示消息
+    function showMessage(text, type) {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = text;
+      messageEl.className = `message ${type}`;
+      messageEl.style.display = 'block';
+      
+      setTimeout(() => {
+        messageEl.style.display = 'none';
+      }, 3000);
+    }
+    
+    // 加载订单数据
+    function loadOrders() {
+      const orderListEl = document.getElementById('orderList');
+      const jsonEditorEl = document.getElementById('jsonEditor');
+      
+      try {
+        const ordersStr = localStorage.getItem('orders');
+        if (ordersStr) {
+          const orders = JSON.parse(ordersStr);
+          console.log('加载到的订单数据:', orders);
+          
+          if (Array.isArray(orders) && orders.length > 0) {
+            orderListEl.innerHTML = '';
+            
+            orders.forEach(order => {
+              const orderEl = document.createElement('div');
+              orderEl.className = 'order-item';
+              
+              const statusClass = `status-${order.status || 'PENDING_PAYMENT'}`;
+              const statusText = getStatusText(order.status);
+              
+              orderEl.innerHTML = `
+                <div class="order-info">
+                  <div>
+                    <span class="order-id">订单ID: ${order.id}</span>
+                    <span class="order-status ${statusClass}">${statusText}</span>
+                  </div>
+                  <div>金额: ¥${order.totalAmount?.toFixed(2) || '0.00'}</div>
+                  <div>创建时间: ${new Date(order.createdAt).toLocaleString()}</div>
+                </div>
+                <div class="order-actions">
+                  ${order.status !== 'CANCELLED' ? 
+                    `<button class="danger" onclick="cancelOrder('${order.id}')">取消订单</button>` : 
+                    `<button class="default" disabled>已取消</button>`
+                  }
+                </div>
+              `;
+              
+              orderListEl.appendChild(orderEl);
+            });
+            
+            // 更新JSON编辑器
+            jsonEditorEl.value = JSON.stringify(orders, null, 2);
+          } else {
+            orderListEl.innerHTML = '<div style="padding: 20px; text-align: center;">没有订单数据</div>';
+            jsonEditorEl.value = '[]';
+          }
+        } else {
+          orderListEl.innerHTML = '<div style="padding: 20px; text-align: center;">没有订单数据</div>';
+          jsonEditorEl.value = '[]';
+        }
+      } catch (error) {
+        console.error('加载订单数据失败:', error);
+        orderListEl.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">加载订单数据失败</div>';
+        showMessage('加载订单数据失败: ' + error.message, 'error');
+      }
+    }
+    
+    // 获取状态文本
+    function getStatusText(status) {
+      const statusMap = {
+        'PENDING_PAYMENT': '待付款',
+        'PAID': '已付款',
+        'PROCESSING': '处理中',
+        'SHIPPED': '已发货',
+        'COMPLETED': '已完成',
+        'CANCELLED': '已取消'
+      };
+      
+      return statusMap[status] || '未知';
+    }
+    
+    // 取消订单
+    function cancelOrder(orderId) {
+      try {
+        const ordersStr = localStorage.getItem('orders');
+        if (ordersStr) {
+          const orders = JSON.parse(ordersStr);
+          const orderIndex = orders.findIndex(o => o.id === orderId);
+          
+          if (orderIndex !== -1) {
+            orders[orderIndex].status = 'CANCELLED';
+            localStorage.setItem('orders', JSON.stringify(orders));
+            showMessage('订单已取消', 'success');
+            loadOrders();
+          } else {
+            showMessage('未找到订单', 'error');
+          }
+        } else {
+          showMessage('未找到订单数据', 'error');
+        }
+      } catch (error) {
+        console.error('取消订单失败:', error);
+        showMessage('取消订单失败: ' + error.message, 'error');
+      }
+    }
+    
+    // 创建测试订单
+    function createTestOrder() {
+      try {
+        const ordersStr = localStorage.getItem('orders');
+        const orders = ordersStr ? JSON.parse(ordersStr) : [];
+        
+        const newOrder = {
+          id: `TEST${Date.now()}`,
+          userId: 1,
+          items: [
+            {
+              product: {
+                id: 1,
+                name: '测试商品',
+                description: '测试商品描述',
+                price: 999.00,
+                stockQuantity: 100,
+                categoryId: 1,
+                imageUrl: 'https://via.placeholder.com/300x300?text=测试商品',
+                salesCount: 0,
+                status: 1,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                categoryName: '测试分类'
+              },
+              quantity: 1
+            }
+          ],
+          totalAmount: 999.00,
+          status: 'PENDING_PAYMENT',
+          createdAt: new Date().toISOString(),
+          addressId: 1,
+          paymentMethod: 'credit_card'
+        };
+        
+        orders.unshift(newOrder);
+        localStorage.setItem('orders', JSON.stringify(orders));
+        
+        showMessage('测试订单已创建', 'success');
+        loadOrders();
+      } catch (error) {
+        console.error('创建测试订单失败:', error);
+        showMessage('创建测试订单失败: ' + error.message, 'error');
+      }
+    }
+    
+    // 清空订单
+    function clearOrders() {
+      if (confirm('您确定要清空所有订单吗？')) {
+        localStorage.removeItem('orders');
+        showMessage('订单已清空', 'success');
+        loadOrders();
+      }
+    }
+    
+    // 加载JSON数据到编辑器
+    function loadJsonData() {
+      const jsonEditorEl = document.getElementById('jsonEditor');
+      const ordersStr = localStorage.getItem('orders');
+      
+      if (ordersStr) {
+        try {
+          const orders = JSON.parse(ordersStr);
+          jsonEditorEl.value = JSON.stringify(orders, null, 2);
+          showMessage('数据已重新加载', 'success');
+        } catch (error) {
+          console.error('解析订单数据失败:', error);
+          showMessage('解析订单数据失败: ' + error.message, 'error');
+        }
+      } else {
+        jsonEditorEl.value = '[]';
+        showMessage('没有订单数据', 'success');
+      }
+    }
+    
+    // 保存JSON数据
+    function saveJsonData() {
+      const jsonEditorEl = document.getElementById('jsonEditor');
+      
+      try {
+        const orders = JSON.parse(jsonEditorEl.value);
+        localStorage.setItem('orders', JSON.stringify(orders));
+        showMessage('数据已保存', 'success');
+        loadOrders();
+      } catch (error) {
+        console.error('保存数据失败:', error);
+        showMessage('保存数据失败: ' + error.message, 'error');
+      }
+    }
+    
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      loadOrders();
+    });
+  </script>
+</body>
+</html> 

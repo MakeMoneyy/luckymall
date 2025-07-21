@@ -9,6 +9,7 @@ D:\luckymall\backend\src\main\java\com\luckymall\mapper\CustomerServiceChatMappe
 D:\luckymall\backend\src\main\java\com\luckymall\entity\ChatMessage.java
 D:\luckymall\backend\src\main\java\com\luckymall\common\PageResult.java
 D:\luckymall\backend\src\main\java\com\luckymall\dto\CreateOrderRequest.java
+D:\luckymall\backend\src\main\java\com\luckymall\dto\PaymentRequest.java
 D:\luckymall\backend\src\main\java\com\luckymall\controller\OrderController.java
 D:\luckymall\backend\src\main\java\com\luckymall\mapper\CartMapper.java
 D:\luckymall\backend\src\main\java\com\luckymall\service\ProductService.java
@@ -22,6 +23,7 @@ D:\luckymall\backend\src\main\java\com\luckymall\service\UserAddressService.java
 D:\luckymall\backend\src\main\java\com\luckymall\entity\Product.java
 D:\luckymall\backend\src\main\java\com\luckymall\dto\UpdateCartRequest.java
 D:\luckymall\backend\src\main\java\com\luckymall\entity\InstallmentPlan.java
+D:\luckymall\backend\src\main\java\com\luckymall\service\PaymentService.java
 D:\luckymall\backend\src\main\java\com\luckymall\controller\UserAddressController.java
 D:\luckymall\backend\src\main\java\com\luckymall\dto\ChatResponse.java
 D:\luckymall\backend\src\main\java\com\luckymall\dto\AddToCartRequest.java
@@ -35,8 +37,10 @@ D:\luckymall\backend\src\main\java\com\luckymall\service\ChatSessionService.java
 D:\luckymall\backend\src\main\java\com\luckymall\service\impl\OrderServiceImpl.java
 D:\luckymall\backend\src\main\java\com\luckymall\service\impl\CartServiceImpl.java
 D:\luckymall\backend\src\main\java\com\luckymall\LuckyMallApplication.java
+D:\luckymall\backend\src\main\java\com\luckymall\service\impl\PaymentServiceImpl.java
 D:\luckymall\backend\src\main\java\com\luckymall\entity\CustomerServiceChat.java
 D:\luckymall\backend\src\main\java\com\luckymall\mapper\CategoryMapper.java
+D:\luckymall\backend\src\main\java\com\luckymall\entity\Payment.java
 D:\luckymall\backend\src\main\java\com\luckymall\service\impl\ChatCacheService.java
 D:\luckymall\backend\src\main\java\com\luckymall\entity\Order.java
 D:\luckymall\backend\src\main\java\com\luckymall\mapper\FaqKnowledgeMapper.java
@@ -45,6 +49,7 @@ D:\luckymall\backend\src\main\java\com\luckymall\controller\ChatController.java
 D:\luckymall\backend\src\main\java\com\luckymall\service\InstallmentPlanService.java
 D:\luckymall\backend\src\main\java\com\luckymall\entity\CartItem.java
 D:\luckymall\backend\src\main\java\com\luckymall\entity\User.java
+D:\luckymall\backend\src\main\java\com\luckymall\dto\QRCodePaymentResponse.java
 D:\luckymall\backend\src\main\java\com\luckymall\dto\ChatContext.java
 D:\luckymall\backend\src\main\java\com\luckymall\config\RedisConfig.java
 D:\luckymall\backend\src\main\java\com\luckymall\dto\CreateOrderResponse.java
@@ -52,6 +57,7 @@ D:\luckymall\backend\src\main\java\com\luckymall\common\Result.java
 D:\luckymall\backend\src\main\java\com\luckymall\service\impl\UserAddressServiceImpl.java
 D:\luckymall\backend\src\main\java\com\luckymall\mapper\OrderMapper.java
 D:\luckymall\backend\src\main\java\com\luckymall\config\DashScopeConfig.java
+D:\luckymall\backend\src\main\java\com\luckymall\controller\PaymentController.java
 D:\luckymall\backend\src\main\java\com\luckymall\mapper\InstallmentPlanMapper.java
 D:\luckymall\backend\src\main\java\com\luckymall\service\ChatService.java
 D:\luckymall\backend\src\main\java\com\luckymall\dto\AddAddressRequest.java
