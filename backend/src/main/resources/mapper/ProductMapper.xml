@@ -173,4 +173,35 @@
         WHERE id = #{productId} AND status = 1
     </update>
 
+    <!-- 带检查的库存扣减方法 -->
+    <update id="decreaseStockWithCheck">
+        UPDATE products 
+        SET stock_quantity = stock_quantity - #{quantity},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{productId} 
+          AND status = 1 
+          AND stock_quantity >= #{quantity}
+    </update>
+    
+    <!-- 查询所有商品ID -->
+    <select id="selectAllProductIds" resultType="String">
+        SELECT id
+        FROM products
+        WHERE status = 1
+    </select>
+    
+    <!-- 更新商品 -->
+    <update id="updateById">
+        UPDATE products 
+        SET name = #{name},
+            description = #{description},
+            price = #{price},
+            category_id = #{categoryId},
+            stock_quantity = #{stockQuantity},
+            image_url = #{imageUrl},
+            status = #{status},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
 </mapper> 

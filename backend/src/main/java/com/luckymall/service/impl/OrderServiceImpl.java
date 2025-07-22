@@ -5,6 +5,7 @@ import com.luckymall.dto.CreateOrderResponse;
 import com.luckymall.entity.*;
 import com.luckymall.mapper.*;
 import com.luckymall.service.OrderService;
+import com.luckymall.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,12 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private ProductMapper productMapper;
     
+    @Autowired
+    private RedisLockService lockService;
+    
+    @Autowired
+    private ProductService productService;
+    
     // 订单号计数器（实际项目中可以使用Redis或数据库序列）
     private static final AtomicLong ORDER_COUNTER = new AtomicLong(1);
 
@@ -50,139 +57,153 @@ public class OrderServiceImpl implements OrderService {
     public CreateOrderResponse createOrder(Long userId, CreateOrderRequest request) {
         log.info("开始创建订单，用户ID：{}，请求：{}", userId, request);
         
-        try {
-            // 1. 验证参数
-            validateCreateOrderRequest(userId, request);
-            
-            // 2. 获取选中的购物车商品
-            List<CartItem> cartItems = getSelectedCartItems(request.getCartItemIds());
-            if (cartItems.isEmpty()) {
-                throw new RuntimeException("购物车商品不存在或已失效");
-            }
-            
-            // 3. 计算订单金额
-            BigDecimal totalAmount = calculateTotalAmount(cartItems);
-            
-            // 4. 验证金额是否匹配
-            if (totalAmount.compareTo(request.getExpectedAmount()) != 0) {
-                throw new RuntimeException("订单金额不匹配，请刷新后重试");
-            }
-            
-            // 5. 获取收货地址
-            UserAddress address = userAddressMapper.selectUserAddressById(request.getAddressId());
-            if (address == null || !address.getUserId().equals(userId)) {
-                throw new RuntimeException("收货地址不存在");
-            }
-            
-            // 6. 处理分期付款
-            InstallmentPlan installmentPlan = null;
-            BigDecimal monthlyAmount = null;
-            if (Boolean.TRUE.equals(request.getIsInstallment()) && request.getInstallmentPlanId() != null) {
-                installmentPlan = installmentPlanMapper.selectInstallmentPlanById(request.getInstallmentPlanId());
-                if (installmentPlan == null || installmentPlan.getStatus() != 1) {
-                    throw new RuntimeException("分期方案不存在或已禁用");
+        // 使用分布式锁保护订单创建流程，避免用户重复下单
+        String lockKey = "order:create:" + userId;
+        
+        return lockService.executeWithLock(lockKey, () -> {
+            try {
+                // 1. 验证参数
+                validateCreateOrderRequest(userId, request);
+                
+                // 2. 获取选中的购物车商品
+                List<CartItem> cartItems = getSelectedCartItems(request.getCartItemIds());
+                if (cartItems.isEmpty()) {
+                    throw new RuntimeException("购物车商品不存在或已失效");
                 }
                 
-                // 验证分期金额范围
-                if (totalAmount.compareTo(installmentPlan.getMinAmount()) < 0 || 
-                    totalAmount.compareTo(installmentPlan.getMaxAmount()) > 0) {
-                    throw new RuntimeException("订单金额不在分期方案范围内");
+                // 3. 计算订单金额
+                BigDecimal totalAmount = calculateTotalAmount(cartItems);
+                
+                // 4. 验证金额是否匹配
+                if (totalAmount.compareTo(request.getExpectedAmount()) != 0) {
+                    throw new RuntimeException("订单金额不匹配，请刷新后重试");
                 }
                 
-                monthlyAmount = installmentPlan.calculateMonthlyAmount(totalAmount);
-            }
-            
-            // 7. 创建订单
-            Order order = new Order();
-            order.setOrderNo(generateOrderNo());
-            order.setUserId(userId);
-            order.setOrderStatus("PENDING_PAYMENT");
-            order.setPaymentStatus("UNPAID");
-            order.setPaymentMethod(request.getPaymentMethod());
-            order.setTotalAmount(totalAmount);
-            order.setActualAmount(totalAmount); // 暂时没有优惠
-            order.setDiscountAmount(BigDecimal.ZERO);
-            order.setShippingFee(BigDecimal.ZERO); // 暂时免运费
-            order.setReceiverName(address.getReceiverName());
-            order.setReceiverPhone(address.getReceiverPhone());
-            order.setReceiverAddress(address.getFullAddress());
-            order.setOrderRemark(request.getOrderRemark());
-            
-            // 分期信息
-            if (installmentPlan != null) {
-                order.setIsInstallment(1);
-                order.setInstallmentPlanId(installmentPlan.getId());
-                order.setInstallmentCount(installmentPlan.getInstallmentCount());
-                order.setMonthlyAmount(monthlyAmount);
-            } else {
-                order.setIsInstallment(0);
-            }
-            
-            // 插入订单
-            orderMapper.insertOrder(order);
-            log.info("订单创建成功，订单ID：{}，订单号：{}", order.getId(), order.getOrderNo());
-            
-            // 8. 创建订单商品
-            List<OrderItem> orderItems = new ArrayList<>();
-            for (CartItem cartItem : cartItems) {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrderId(order.getId());
-                orderItem.setProductId(cartItem.getProduct().getId());
-                orderItem.setProductName(cartItem.getProduct().getName());
-                orderItem.setProductImage(cartItem.getProduct().getImageUrl());
-                orderItem.setProductPrice(cartItem.getProduct().getPrice());
-                orderItem.setQuantity(cartItem.getQuantity());
-                orderItem.setSubtotal(cartItem.getProduct().getPrice().multiply(new BigDecimal(cartItem.getQuantity())));
-                orderItems.add(orderItem);
-            }
-            
-            // 批量插入订单商品
-            if (!orderItems.isEmpty()) {
-                orderItemMapper.insertOrderItems(orderItems);
-                log.info("订单商品创建成功，数量：{}", orderItems.size());
-            }
-            
-            // 8.5. 扣减商品库存并更新销量
-            for (CartItem cartItem : cartItems) {
-                Long productId = cartItem.getProduct().getId();
-                Integer quantity = cartItem.getQuantity();
-                
-                // 扣减库存
-                int stockUpdateResult = productMapper.decreaseStockQuantity(productId, quantity);
-                if (stockUpdateResult == 0) {
-                    throw new RuntimeException("扣减商品库存失败，商品ID：" + productId + "，可能库存不足");
+                // 5. 获取收货地址
+                UserAddress address = userAddressMapper.selectUserAddressById(request.getAddressId());
+                if (address == null || !address.getUserId().equals(userId)) {
+                    throw new RuntimeException("收货地址不存在");
                 }
                 
-                // 更新销量
-                productMapper.increaseSalesCount(productId, quantity);
-                log.info("商品{}库存扣减{}，销量增加{}", productId, quantity, quantity);
+                // 6. 处理分期付款
+                InstallmentPlan installmentPlan = null;
+                BigDecimal monthlyAmount = null;
+                if (Boolean.TRUE.equals(request.getIsInstallment()) && request.getInstallmentPlanId() != null) {
+                    installmentPlan = installmentPlanMapper.selectInstallmentPlanById(request.getInstallmentPlanId());
+                    if (installmentPlan == null || installmentPlan.getStatus() != 1) {
+                        throw new RuntimeException("分期方案不存在或已禁用");
+                    }
+                    
+                    // 验证分期金额范围
+                    if (totalAmount.compareTo(installmentPlan.getMinAmount()) < 0 || 
+                        totalAmount.compareTo(installmentPlan.getMaxAmount()) > 0) {
+                        throw new RuntimeException("订单金额不在分期方案范围内");
+                    }
+                    
+                    monthlyAmount = installmentPlan.calculateMonthlyAmount(totalAmount);
+                }
+                
+                // 7. 锁定并扣减库存
+                lockAndDeductStock(cartItems);
+                
+                // 8. 创建订单
+                Order order = new Order();
+                order.setOrderNo(generateOrderNo());
+                order.setUserId(userId);
+                order.setOrderStatus("PENDING_PAYMENT");
+                order.setPaymentStatus("UNPAID");
+                order.setPaymentMethod(request.getPaymentMethod());
+                order.setTotalAmount(totalAmount);
+                order.setActualAmount(totalAmount);
+                order.setDiscountAmount(BigDecimal.ZERO);
+                order.setShippingFee(BigDecimal.ZERO);
+                
+                // 设置收货信息
+                order.setReceiverName(address.getReceiverName());
+                order.setReceiverPhone(address.getReceiverPhone());
+                order.setReceiverAddress(
+                    address.getProvince() + " " + 
+                    address.getCity() + " " + 
+                    address.getDistrict() + " " + 
+                    address.getDetailAddress()
+                );
+                
+                // 设置备注
+                order.setOrderRemark(request.getOrderRemark());
+                
+                // 设置分期信息
+                if (installmentPlan != null) {
+                    order.setIsInstallment(1);
+                    order.setInstallmentPlanId(installmentPlan.getId());
+                    order.setInstallmentCount(installmentPlan.getInstallmentCount());
+                    order.setMonthlyAmount(monthlyAmount);
+                } else {
+                    order.setIsInstallment(0);
+                }
+                
+                // 设置时间
+                order.setCreatedAt(LocalDateTime.now());
+                order.setUpdatedAt(LocalDateTime.now());
+                
+                // 插入订单
+                orderMapper.insertOrder(order);
+                log.info("订单创建成功，订单ID：{}，订单号：{}", order.getId(), order.getOrderNo());
+                
+                // 9. 创建订单商品
+                List<OrderItem> orderItems = new ArrayList<>();
+                for (CartItem cartItem : cartItems) {
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setOrderId(order.getId());
+                    orderItem.setProductId(cartItem.getProduct().getId());
+                    orderItem.setProductName(cartItem.getProduct().getName());
+                    orderItem.setProductImage(cartItem.getProduct().getImageUrl());
+                    orderItem.setProductPrice(cartItem.getProduct().getPrice());
+                    orderItem.setQuantity(cartItem.getQuantity());
+                    orderItem.setSubtotal(cartItem.getProduct().getPrice().multiply(new BigDecimal(cartItem.getQuantity())));
+                    orderItems.add(orderItem);
+                }
+                
+                // 批量插入订单商品
+                if (!orderItems.isEmpty()) {
+                    orderItemMapper.insertOrderItems(orderItems);
+                    log.info("订单商品创建成功，数量：{}", orderItems.size());
+                }
+                
+                // 10. 更新商品销量
+                for (CartItem cartItem : cartItems) {
+                    Long productId = cartItem.getProduct().getId();
+                    Integer quantity = cartItem.getQuantity();
+                    
+                    // 更新销量
+                    productMapper.increaseSalesCount(productId, quantity);
+                    log.info("商品{}销量增加{}", productId, quantity);
+                }
+                
+                // 11. 清空购物车中的已下单商品
+                for (Long cartItemId : request.getCartItemIds()) {
+                    cartMapper.deleteCartItem(cartItemId);
+                }
+                log.info("购物车商品清理完成");
+                
+                // 12. 构建响应
+                CreateOrderResponse response = new CreateOrderResponse();
+                response.setOrderId(order.getId());
+                response.setOrderNo(order.getOrderNo());
+                response.setTotalAmount(order.getTotalAmount());
+                response.setActualAmount(order.getActualAmount());
+                response.setIsInstallment(order.getIsInstallment() == 1);
+                response.setInstallmentCount(order.getInstallmentCount());
+                response.setMonthlyAmount(order.getMonthlyAmount());
+                response.setPaymentMethod(order.getPaymentMethod());
+                response.setReceiverAddress(order.getReceiverAddress());
+                
+                log.info("订单创建完成：{}", response);
+                return response;
+            } catch (Exception e) {
+                log.error("创建订单失败", e);
+                throw e;
             }
-            
-            // 9. 清空购物车中的已下单商品
-            for (Long cartItemId : request.getCartItemIds()) {
-                cartMapper.deleteCartItem(cartItemId);
-            }
-            log.info("购物车商品清理完成");
-            
-            // 10. 构建响应
-            CreateOrderResponse response = new CreateOrderResponse();
-            response.setOrderId(order.getId());
-            response.setOrderNo(order.getOrderNo());
-            response.setTotalAmount(order.getTotalAmount());
-            response.setActualAmount(order.getActualAmount());
-            response.setIsInstallment(order.getIsInstallment() == 1);
-            response.setInstallmentCount(order.getInstallmentCount());
-            response.setMonthlyAmount(order.getMonthlyAmount());
-            response.setPaymentMethod(order.getPaymentMethod());
-            response.setReceiverAddress(order.getReceiverAddress());
-            
-            log.info("订单创建完成：{}", response);
-            return response;
-            
-        } catch (Exception e) {
-            log.error("创建订单失败", e);
-            throw new RuntimeException("创建订单失败: " + e.getMessage());
-        }
+        });
     }
 
     @Override
@@ -423,5 +444,22 @@ public class OrderServiceImpl implements OrderService {
             totalAmount = totalAmount.add(itemTotal);
         }
         return totalAmount;
+    }
+
+    /**
+     * 锁定并扣减库存
+     */
+    private void lockAndDeductStock(List<CartItem> cartItems) {
+        for (CartItem item : cartItems) {
+            Long productId = item.getProduct().getId();
+            Integer quantity = item.getQuantity();
+            
+            // 使用改进后的库存扣减方法
+            boolean success = productService.decreaseStock(productId, quantity);
+            
+            if (!success) {
+                throw new RuntimeException("商品" + item.getProduct().getName() + "库存不足");
+            }
+        }
     }
 } 

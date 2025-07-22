@@ -44,4 +44,30 @@ public interface ProductService {
      */
     PageResult<Product> searchProducts(String keyword, Integer current, Integer size, 
                                       String sortBy, Long categoryId);
+    
+    /**
+     * 更新商品信息
+     * 
+     * @param product 商品信息
+     * @return 是否更新成功
+     */
+    boolean updateProduct(Product product);
+    
+    /**
+     * 安全扣减库存（带分布式锁）
+     * 
+     * @param productId 商品ID
+     * @param quantity 扣减数量
+     * @return 是否扣减成功
+     */
+    boolean decreaseStock(Long productId, int quantity);
+    
+    /**
+     * 增加库存
+     * 
+     * @param productId 商品ID
+     * @param quantity 增加数量
+     * @return 是否增加成功
+     */
+    boolean increaseStock(Long productId, int quantity);
 } 

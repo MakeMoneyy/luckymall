@@ -1,4 +1,6 @@
 D:\luckymall\backend\src\test\java\com\luckymall\service\EmotionAnalysisServiceTest.java
+D:\luckymall\backend\src\test\java\com\luckymall\service\CacheProtectionServiceTest.java
+D:\luckymall\backend\src\test\java\com\luckymall\service\RedisLockServiceTest.java
 D:\luckymall\backend\src\test\java\com\luckymall\service\ProductServiceTest.java
 D:\luckymall\backend\src\test\java\com\luckymall\service\ChatServiceTest.java
 D:\luckymall\backend\src\test\java\com\luckymall\service\HumanServiceTransferServiceTest.java

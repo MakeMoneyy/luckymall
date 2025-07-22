@@ -1,5 +1,7 @@
 com\luckymall\service\ChatServiceTest.class
-com\luckymall\service\HumanServiceTransferServiceTest.class
 com\luckymall\service\IntentRecognitionServiceTest.class
-com\luckymall\service\EmotionAnalysisServiceTest.class
+com\luckymall\service\RedisLockServiceTest.class
 com\luckymall\service\ProductServiceTest.class
+com\luckymall\service\CacheProtectionServiceTest.class
+com\luckymall\service\HumanServiceTransferServiceTest.class
+com\luckymall\service\EmotionAnalysisServiceTest.class

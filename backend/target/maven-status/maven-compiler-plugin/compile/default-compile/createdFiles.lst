@@ -1,12 +1,14 @@
 com\luckymall\controller\ChatController.class
 com\luckymall\service\impl\EmotionAnalysisServiceImpl.class
 com\luckymall\config\DashScopeConfig.class
+com\luckymall\service\impl\BloomFilterService.class
 com\luckymall\dto\UserCreditCardResponse.class
 com\luckymall\service\UserAddressService.class
 com\luckymall\service\impl\ChatSessionServiceImpl.class
 com\luckymall\mapper\ProductMapper.class
 com\luckymall\entity\Category.class
 com\luckymall\dto\AddToCartRequest.class
+com\luckymall\config\ThreadPoolConfig.class
 com\luckymall\service\impl\ChatCacheService$CacheEntry.class
 com\luckymall\service\impl\ChatServiceImpl.class
 com\luckymall\dto\IntentRecognitionResult.class
@@ -55,6 +57,7 @@ com\luckymall\entity\User.class
 com\luckymall\service\impl\PaymentServiceImpl.class
 com\luckymall\entity\ChatMessage$ChatMessageBuilder.class
 com\luckymall\entity\UserCreditCard.class
+com\luckymall\config\ThreadPoolConfig$NamedThreadFactory.class
 com\luckymall\dto\QRCodePaymentResponse.class
 com\luckymall\mapper\FaqKnowledgeMapper.class
 com\luckymall\mapper\InstallmentPlanMapper.class
@@ -62,10 +65,13 @@ com\luckymall\controller\ProductController.class
 com\luckymall\mapper\CategoryMapper.class
 com\luckymall\entity\Product.class
 com\luckymall\entity\Payment.class
+com\luckymall\service\impl\CacheProtectionService.class
 com\luckymall\dto\ChatResponse.class
 com\luckymall\service\impl\UserAddressServiceImpl.class
 com\luckymall\service\IntentRecognitionService.class
 com\luckymall\entity\ChatMessage.class
+com\luckymall\config\JacksonConfig.class
+com\luckymall\service\impl\RedisLockService.class
 com\luckymall\service\impl\CartServiceImpl.class
 com\luckymall\common\PageResult.class
 com\luckymall\service\ChatService.class
@@ -84,7 +90,9 @@ com\luckymall\entity\Order.class
 com\luckymall\dto\EmotionAnalysisResult.class
 com\luckymall\service\OrderService.class
 com\luckymall\service\CartService.class
+com\luckymall\service\impl\CacheProtectionService$EmptyValue.class
 com\luckymall\service\ChatSessionService.class
 com\luckymall\enums\IntentType.class
+com\luckymall\service\impl\CacheConsistencyService.class
 com\luckymall\entity\UserAddress.class
 com\luckymall\dto\UpdateCartRequest.class

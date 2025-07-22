@@ -113,4 +113,30 @@ public interface ProductMapper {
      * @return 更新的行数
      */
     int decreaseSalesCount(@Param("productId") Long productId, @Param("salesCount") Integer salesCount);
+    
+    /**
+     * 带检查的库存扣减方法
+     * 只有当库存足够时才扣减库存，原子操作
+     * 
+     * @param productId 商品ID
+     * @param quantity 扣减数量
+     * @return 更新的行数，0表示库存不足
+     */
+    int decreaseStockWithCheck(@Param("productId") Long productId, @Param("quantity") Integer quantity);
+    
+    /**
+     * 查询所有商品ID
+     * 用于布隆过滤器初始化
+     * 
+     * @return 所有商品ID列表
+     */
+    List<String> selectAllProductIds();
+    
+    /**
+     * 更新商品
+     * 
+     * @param product 商品信息
+     * @return 更新的行数
+     */
+    int updateById(Product product);
 } 
