@@ -1,2 +1,5 @@
 com\luckymall\service\ChatServiceTest.class
+com\luckymall\service\HumanServiceTransferServiceTest.class
+com\luckymall\service\IntentRecognitionServiceTest.class
+com\luckymall\service\EmotionAnalysisServiceTest.class
 com\luckymall\service\ProductServiceTest.class

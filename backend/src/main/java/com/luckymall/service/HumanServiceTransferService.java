@@ -32,6 +32,13 @@ public interface HumanServiceTransferService {
     HumanServiceSession getHumanServiceSession(Long userId, String sessionId);
     
     /**
+     * 根据会话ID获取人工客服会话状态
+     * @param sessionId 会话ID
+     * @return 人工客服会话
+     */
+    HumanServiceSession getHumanServiceSessionBySessionId(String sessionId);
+    
+    /**
      * 更新人工客服会话状态
      * @param sessionId 会话ID
      * @param status 状态

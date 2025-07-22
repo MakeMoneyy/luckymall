@@ -73,6 +73,11 @@ public class HumanServiceTransferServiceImpl implements HumanServiceTransferServ
     public HumanServiceSession getHumanServiceSession(Long userId, String sessionId) {
         return humanServiceSessionMapper.findByUserIdAndSessionId(userId, sessionId);
     }
+    
+    @Override
+    public HumanServiceSession getHumanServiceSessionBySessionId(String sessionId) {
+        return humanServiceSessionMapper.findBySessionId(sessionId);
+    }
 
     @Override
     public HumanServiceSession updateSessionStatus(String sessionId, String status) {

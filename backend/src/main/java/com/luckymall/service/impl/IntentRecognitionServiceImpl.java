@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,10 +36,10 @@ public class IntentRecognitionServiceImpl implements IntentRecognitionService {
     private static final String[] PAYMENT_KEYWORDS = {"支付", "付款", "付钱", "支付宝", "微信", "银行卡", "信用卡", "花呗", "分期"};
     
     // 物流查询相关关键词
-    private static final String[] LOGISTICS_KEYWORDS = {"物流", "快递", "发货", "收货", "送货", "到货", "运输", "邮寄"};
+    private static final String[] LOGISTICS_KEYWORDS = {"物流", "快递", "发货", "收货", "送货", "到货", "运输", "邮寄", "包裹", "配送", "何时到达", "什么时候到", "到哪了", "物流状态", "派送"};
     
     // 退换货相关关键词
-    private static final String[] RETURN_KEYWORDS = {"退货", "换货", "退款", "返款", "退钱", "不想要了", "不满意", "质量问题"};
+    private static final String[] RETURN_KEYWORDS = {"退货", "换货", "退款", "返款", "退钱", "不想要了", "不满意", "质量问题", "有问题", "不好用", "坏了", "损坏", "不合适", "退回", "不喜欢", "换一个"};
     
     // 信用卡相关关键词
     private static final String[] CREDIT_CARD_KEYWORDS = {"信用卡", "招行卡", "招商银行", "刷卡", "卡片", "额度", "账单", "还款"};
@@ -59,6 +58,12 @@ public class IntentRecognitionServiceImpl implements IntentRecognitionService {
     
     // 数量表达式正则
     private static final Pattern QUANTITY_PATTERN = Pattern.compile("(\\d+)(个|件|箱|袋|瓶|台|部|只|双|条|张|套|份|本|支|块|次)?");
+    
+    // 订单号正则表达式
+    private static final Pattern ORDER_NUMBER_PATTERN = Pattern.compile("订单号?[为是:：]?\\s*(\\d{5,12})|(\\d{5,12})\\s*的?订单");
+    
+    // 商品ID正则表达式
+    private static final Pattern PRODUCT_ID_PATTERN = Pattern.compile("商品号?[为是:：]?\\s*(\\d{1,8})|(\\d{1,8})\\s*的?商品");
 
     @Override
     public IntentRecognitionResult recognizeIntent(String message, ChatContext context) {
@@ -74,50 +79,85 @@ public class IntentRecognitionServiceImpl implements IntentRecognitionService {
         // 将消息转为小写进行匹配
         String lowerMessage = message.toLowerCase();
         
-        // 检查是否包含订单查询关键词
-        if (containsKeywords(lowerMessage, ORDER_KEYWORDS)) {
-            intentType = IntentType.ORDER_QUERY;
-            confidence = calculateConfidence(lowerMessage, ORDER_KEYWORDS);
+        // 考虑上下文信息进行意图识别
+        if (context != null && context.getRecognizedEntities() != null) {
+            Object currentPageObj = context.getRecognizedEntities().get("currentPage");
+            String currentPage = currentPageObj != null ? currentPageObj.toString() : null;
+            // 如果用户在订单页面，更可能是订单查询意图
+            if (currentPage != null && ("order".equals(currentPage) || "order_history".equals(currentPage))) {
+                if (containsKeywords(lowerMessage, ORDER_KEYWORDS)) {
+                    intentType = IntentType.ORDER_QUERY;
+                    confidence = calculateConfidence(lowerMessage, ORDER_KEYWORDS) + 0.1f; // 提高置信度
+                }
+            }
+            // 如果用户在商品页面，更可能是商品查询意图
+            else if (currentPage != null && ("product".equals(currentPage) || "product_detail".equals(currentPage))) {
+                if (containsKeywords(lowerMessage, PRODUCT_KEYWORDS)) {
+                    intentType = IntentType.PRODUCT_QUERY;
+                    confidence = calculateConfidence(lowerMessage, PRODUCT_KEYWORDS) + 0.1f; // 提高置信度
+                }
+            }
         }
-        // 检查是否包含商品查询关键词
-        else if (containsKeywords(lowerMessage, PRODUCT_KEYWORDS)) {
-            intentType = IntentType.PRODUCT_QUERY;
-            confidence = calculateConfidence(lowerMessage, PRODUCT_KEYWORDS);
-        }
-        // 检查是否包含支付查询关键词
-        else if (containsKeywords(lowerMessage, PAYMENT_KEYWORDS)) {
-            intentType = IntentType.PAYMENT_QUERY;
-            confidence = calculateConfidence(lowerMessage, PAYMENT_KEYWORDS);
-        }
-        // 检查是否包含物流查询关键词
-        else if (containsKeywords(lowerMessage, LOGISTICS_KEYWORDS)) {
-            intentType = IntentType.LOGISTICS_QUERY;
-            confidence = calculateConfidence(lowerMessage, LOGISTICS_KEYWORDS);
-        }
-        // 检查是否包含退换货关键词
-        else if (containsKeywords(lowerMessage, RETURN_KEYWORDS)) {
-            intentType = IntentType.RETURN_REFUND;
-            confidence = calculateConfidence(lowerMessage, RETURN_KEYWORDS);
-        }
-        // 检查是否包含信用卡关键词
-        else if (containsKeywords(lowerMessage, CREDIT_CARD_KEYWORDS)) {
-            intentType = IntentType.CREDIT_CARD;
-            confidence = calculateConfidence(lowerMessage, CREDIT_CARD_KEYWORDS);
-        }
-        // 检查是否包含积分查询关键词
-        else if (containsKeywords(lowerMessage, POINTS_KEYWORDS)) {
-            intentType = IntentType.POINTS_QUERY;
-            confidence = calculateConfidence(lowerMessage, POINTS_KEYWORDS);
-        }
-        // 检查是否包含投诉关键词
-        else if (containsKeywords(lowerMessage, COMPLAINT_KEYWORDS)) {
-            intentType = IntentType.COMPLAINT;
-            confidence = calculateConfidence(lowerMessage, COMPLAINT_KEYWORDS);
-        }
-        // 检查是否包含表扬关键词
-        else if (containsKeywords(lowerMessage, PRAISE_KEYWORDS)) {
-            intentType = IntentType.PRAISE;
-            confidence = calculateConfidence(lowerMessage, PRAISE_KEYWORDS);
+        
+        // 如果通过上下文没有识别出意图，则通过关键词匹配
+        if (intentType == IntentType.UNKNOWN) {
+            // 检查是否包含退换货关键词（优先级提高）
+            if (containsKeywords(lowerMessage, RETURN_KEYWORDS)) {
+                intentType = IntentType.RETURN_REFUND;
+                confidence = calculateConfidence(lowerMessage, RETURN_KEYWORDS);
+            }
+            // 检查是否包含订单查询关键词
+            else if (containsKeywords(lowerMessage, ORDER_KEYWORDS)) {
+                intentType = IntentType.ORDER_QUERY;
+                confidence = calculateConfidence(lowerMessage, ORDER_KEYWORDS);
+            }
+            // 检查是否包含商品查询关键词
+            else if (containsKeywords(lowerMessage, PRODUCT_KEYWORDS)) {
+                intentType = IntentType.PRODUCT_QUERY;
+                confidence = calculateConfidence(lowerMessage, PRODUCT_KEYWORDS);
+            }
+            // 检查是否包含支付查询关键词
+            else if (containsKeywords(lowerMessage, PAYMENT_KEYWORDS)) {
+                intentType = IntentType.PAYMENT_QUERY;
+                confidence = calculateConfidence(lowerMessage, PAYMENT_KEYWORDS);
+            }
+            // 检查是否包含物流查询关键词
+            else if (containsKeywords(lowerMessage, LOGISTICS_KEYWORDS)) {
+                intentType = IntentType.LOGISTICS_QUERY;
+                confidence = calculateConfidence(lowerMessage, LOGISTICS_KEYWORDS);
+            }
+            // 检查是否包含信用卡关键词
+            else if (containsKeywords(lowerMessage, CREDIT_CARD_KEYWORDS)) {
+                intentType = IntentType.CREDIT_CARD;
+                confidence = calculateConfidence(lowerMessage, CREDIT_CARD_KEYWORDS);
+            }
+            // 检查是否包含积分查询关键词
+            else if (containsKeywords(lowerMessage, POINTS_KEYWORDS)) {
+                intentType = IntentType.POINTS_QUERY;
+                confidence = calculateConfidence(lowerMessage, POINTS_KEYWORDS);
+            }
+            // 检查是否包含投诉关键词
+            else if (containsKeywords(lowerMessage, COMPLAINT_KEYWORDS)) {
+                intentType = IntentType.COMPLAINT;
+                confidence = calculateConfidence(lowerMessage, COMPLAINT_KEYWORDS);
+            }
+            // 检查是否包含表扬关键词
+            else if (containsKeywords(lowerMessage, PRAISE_KEYWORDS)) {
+                intentType = IntentType.PRAISE;
+                confidence = calculateConfidence(lowerMessage, PRAISE_KEYWORDS);
+            }
+            
+            // 特殊处理：如果消息包含"包裹"或"到"相关词，可能是物流查询
+            if (intentType == IntentType.UNKNOWN && (message.contains("包裹") || message.contains("到") || message.contains("送") || message.contains("快递"))) {
+                intentType = IntentType.LOGISTICS_QUERY;
+                confidence = 0.6f;
+            }
+            
+            // 特殊处理：如果消息包含"退"或"换"相关词，可能是退换货
+            if (intentType == IntentType.UNKNOWN && (message.contains("退") || message.contains("换") || message.contains("不想要"))) {
+                intentType = IntentType.RETURN_REFUND;
+                confidence = 0.6f;
+            }
         }
         
         // 设置识别结果
@@ -142,6 +182,33 @@ public class IntentRecognitionServiceImpl implements IntentRecognitionService {
         
         Map<String, Object> entities = new HashMap<>();
         
+        // 提取订单号
+        Matcher orderNumberMatcher = ORDER_NUMBER_PATTERN.matcher(message);
+        if (orderNumberMatcher.find()) {
+            String orderNumber = orderNumberMatcher.group(1) != null ? orderNumberMatcher.group(1) : orderNumberMatcher.group(2);
+            if (orderNumber != null && !orderNumber.isEmpty()) {
+                entities.put("orderNumber", orderNumber);
+            }
+        } else {
+            // 尝试直接提取数字作为订单号（如果消息中包含"订单"关键词）
+            if (message.contains("订单")) {
+                Pattern numberPattern = Pattern.compile("\\d{5,12}");
+                Matcher numberMatcher = numberPattern.matcher(message);
+                if (numberMatcher.find()) {
+                    entities.put("orderNumber", numberMatcher.group());
+                }
+            }
+        }
+        
+        // 提取商品ID
+        Matcher productIdMatcher = PRODUCT_ID_PATTERN.matcher(message);
+        if (productIdMatcher.find()) {
+            String productId = productIdMatcher.group(1) != null ? productIdMatcher.group(1) : productIdMatcher.group(2);
+            if (productId != null && !productId.isEmpty()) {
+                entities.put("productId", productId);
+            }
+        }
+        
         // 提取时间表达式
         Matcher timeMatcher = TIME_PATTERN.matcher(message);
         if (timeMatcher.find()) {
@@ -160,7 +227,7 @@ public class IntentRecognitionServiceImpl implements IntentRecognitionService {
         if (quantityMatcher.find()) {
             String quantityExpression = quantityMatcher.group();
             String quantity = quantityMatcher.group(1);
-            String unit = quantityMatcher.groupCount() > 1 ? quantityMatcher.group(2) : "";
+            String unit = quantityMatcher.groupCount() > 1 && quantityMatcher.group(2) != null ? quantityMatcher.group(2) : "";
             
             entities.put("quantity_expression", quantityExpression);
             entities.put("quantity", Integer.parseInt(quantity));
@@ -259,67 +326,35 @@ public class IntentRecognitionServiceImpl implements IntentRecognitionService {
             startDate = LocalDate.now().minusDays(2);
             endDate = startDate;
         }
-        // 处理"上周"、"本周"、"下周"等
-        else if (timeExpression.contains("上周") || timeExpression.contains("上个星期") || timeExpression.contains("上个礼拜")) {
-            startDate = LocalDate.now().minusWeeks(1).with(java.time.DayOfWeek.MONDAY);
-            endDate = startDate.plusDays(6);
-        } else if (timeExpression.contains("这周") || timeExpression.contains("本周") || timeExpression.contains("这个星期") || timeExpression.contains("这个礼拜")) {
-            startDate = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
-            endDate = startDate.plusDays(6);
-        } else if (timeExpression.contains("下周") || timeExpression.contains("下个星期") || timeExpression.contains("下个礼拜")) {
-            startDate = LocalDate.now().plusWeeks(1).with(java.time.DayOfWeek.MONDAY);
-            endDate = startDate.plusDays(6);
-        }
-        // 处理"上月"、"本月"、"下月"等
-        else if (timeExpression.contains("上月") || timeExpression.contains("上个月")) {
-            startDate = LocalDate.now().minusMonths(1).withDayOfMonth(1);
-            endDate = startDate.plusMonths(1).minusDays(1);
-        } else if (timeExpression.contains("这月") || timeExpression.contains("本月") || timeExpression.contains("这个月")) {
-            startDate = LocalDate.now().withDayOfMonth(1);
-            endDate = startDate.plusMonths(1).minusDays(1);
-        } else if (timeExpression.contains("下月") || timeExpression.contains("下个月")) {
-            startDate = LocalDate.now().plusMonths(1).withDayOfMonth(1);
-            endDate = startDate.plusMonths(1).minusDays(1);
-        }
         
         // 如果成功解析了时间范围
         if (startDate != null && endDate != null) {
-            timeRange.put("start_date", startDate.format(DateTimeFormatter.ISO_DATE));
-            timeRange.put("end_date", endDate.format(DateTimeFormatter.ISO_DATE));
-            
-            // 计算天数
-            long days = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1;
-            timeRange.put("days", days);
-            
-            return timeRange;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            timeRange.put("start_date", startDate.format(formatter));
+            timeRange.put("end_date", endDate.format(formatter));
         }
         
-        return null;
+        return timeRange;
     }
     
     /**
      * 更新上下文
      * @param context 上下文
-     * @param result 识别结果
+     * @param result 意图识别结果
      */
     private void updateContext(ChatContext context, IntentRecognitionResult result) {
-        // 更新当前对话主题
-        if (result.getIntentType() != IntentType.UNKNOWN && result.getConfidence() > 0.7f) {
-            context.setCurrentTopic(result.getIntentType().getCode());
+        if (context == null) {
+            return;
         }
         
-        // 更新已识别的实体信息
-        context.getRecognizedEntities().putAll(result.getExtractedEntities());
+        // 更新上下文中的实体信息
+        if (result.getExtractedEntities() != null && !result.getExtractedEntities().isEmpty()) {
+            context.getRecognizedEntities().putAll(result.getExtractedEntities());
+        }
         
-        // 更新上一次查询对象
-        if (result.getIntentType() == IntentType.ORDER_QUERY) {
-            context.setLastQueryObject("order");
-        } else if (result.getIntentType() == IntentType.PRODUCT_QUERY) {
-            context.setLastQueryObject("product");
-        } else if (result.getIntentType() == IntentType.PAYMENT_QUERY) {
-            context.setLastQueryObject("payment");
-        } else if (result.getIntentType() == IntentType.LOGISTICS_QUERY) {
-            context.setLastQueryObject("logistics");
+        // 更新上下文中的当前主题
+        if (result.getIntentType() != IntentType.UNKNOWN) {
+            context.setCurrentTopic(result.getIntentType().getDescription());
         }
     }
 } 

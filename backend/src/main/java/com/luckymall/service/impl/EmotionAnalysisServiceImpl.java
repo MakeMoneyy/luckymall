@@ -199,8 +199,8 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
             return "STABLE";
         }
         
-        // 获取最近的两次情绪分析结果
-        EmotionAnalysisResult previousResult = history.get(history.size() - 1);
+        // 获取最近的两次情绪分析结果（不包括当前结果）
+        EmotionAnalysisResult previousResult = history.get(history.size() - 2);
         
         // 计算情绪变化
         int currentIntensity = currentResult.getEmotionIntensity();
@@ -251,6 +251,32 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
             }
             // 从正面变为中性
             else if ("POSITIVE".equals(previousResult.getEmotionType()) && "NEUTRAL".equals(currentResult.getEmotionType())) {
+                return "DETERIORATING";
+            }
+        }
+        
+        // 检查整体趋势（最近3条记录）
+        if (history.size() >= 3) {
+            // 获取最近三次情绪记录
+            List<EmotionAnalysisResult> recentHistory = history.subList(history.size() - 3, history.size());
+            
+            // 计算负面情绪的数量
+            int negativeCount = 0;
+            for (EmotionAnalysisResult result : recentHistory) {
+                if ("NEGATIVE".equals(result.getEmotionType())) {
+                    negativeCount++;
+                }
+            }
+            
+            // 如果负面情绪数量增加，认为是恶化趋势
+            if (negativeCount >= 2 && "NEGATIVE".equals(currentResult.getEmotionType())) {
+                return "DETERIORATING";
+            }
+            
+            // 检查情绪强度变化趋势
+            if ("NEGATIVE".equals(currentResult.getEmotionType()) && 
+                "NEGATIVE".equals(recentHistory.get(1).getEmotionType()) && 
+                currentResult.getEmotionIntensity() < recentHistory.get(1).getEmotionIntensity()) {
                 return "DETERIORATING";
             }
         }
