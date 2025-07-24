@@ -1,0 +1,115 @@
+.structured-info-card {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 订单卡片样式 */
+.order-card .ant-card-head {
+  background-color: #e6f7ff;
+}
+
+.order-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.item-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.item-quantity {
+  margin-right: 16px;
+  color: #666;
+}
+
+.item-price {
+  font-weight: 500;
+  color: #ff4d4f;
+}
+
+/* 物流卡片样式 */
+.logistics-card .ant-card-head {
+  background-color: #f6ffed;
+}
+
+.event-location {
+  font-weight: 500;
+}
+
+.event-description {
+  color: #666;
+}
+
+/* 支付卡片样式 */
+.payment-card .ant-card-head {
+  background-color: #fff7e6;
+}
+
+/* 积分卡片样式 */
+.points-card .ant-card-head {
+  background-color: #f9f0ff;
+}
+
+.points-balance {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.points-expiring {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.points-transactions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.transaction-date {
+  width: 100px;
+  color: #666;
+}
+
+.transaction-description {
+  flex: 1;
+}
+
+.transaction-amount {
+  font-weight: 500;
+  width: 80px;
+  text-align: right;
+}
+
+.transaction-amount.earned {
+  color: #52c41a;
+}
+
+.transaction-amount.spent {
+  color: #ff4d4f;
+} 

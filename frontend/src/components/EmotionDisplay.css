@@ -1,0 +1,117 @@
+.emotion-display {
+  padding: 12px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  margin-bottom: 16px;
+}
+
+.emotion-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.emotion-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emotion-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.emotion-icon {
+  font-size: 20px;
+}
+
+.emotion-icon.positive {
+  color: #52c41a;
+}
+
+.emotion-icon.neutral {
+  color: #1890ff;
+}
+
+.emotion-icon.negative {
+  color: #ff4d4f;
+}
+
+.emotion-text {
+  font-weight: 500;
+}
+
+.trend-icon {
+  font-size: 14px;
+}
+
+.trend-icon.improving {
+  color: #52c41a;
+}
+
+.trend-icon.stable {
+  color: #1890ff;
+}
+
+.trend-icon.deteriorating {
+  color: #ff4d4f;
+}
+
+.trend-text {
+  font-size: 12px;
+  color: #666;
+}
+
+.emotion-intensity {
+  margin-bottom: 12px;
+}
+
+.intensity-label {
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.emotion-keywords {
+  margin-bottom: 12px;
+}
+
+.keyword-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #666;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.emotion-warning {
+  color: #ff4d4f;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 简洁模式 */
+.emotion-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.emotion-indicator.small .emotion-icon,
+.emotion-indicator.small .trend-icon {
+  font-size: 14px;
+}
+
+.emotion-indicator.large .emotion-icon,
+.emotion-indicator.large .trend-icon {
+  font-size: 24px;
+} 
