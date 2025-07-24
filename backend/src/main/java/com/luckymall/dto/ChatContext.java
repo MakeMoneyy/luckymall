@@ -40,6 +40,18 @@ public class ChatContext implements Serializable {
     private int promotionCount = 0;
     
     /**
+     * 信用卡推广尝试次数
+     */
+    @Builder.Default
+    private Integer promotionAttempts = 0;
+    
+    /**
+     * 是否已推广过信用卡
+     */
+    @Builder.Default
+    private boolean creditCardPromoted = false;
+    
+    /**
      * 用户是否拒绝推广
      */
     @Builder.Default
@@ -59,6 +71,16 @@ public class ChatContext implements Serializable {
      * 当前浏览的商品名称
      */
     private String currentProductName;
+    
+    /**
+     * 当前浏览商品价格
+     */
+    private Double currentProductPrice;
+    
+    /**
+     * 当前用户意图
+     */
+    private String currentIntent;
     
     /**
      * 最近浏览的商品列表

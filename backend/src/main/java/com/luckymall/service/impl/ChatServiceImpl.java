@@ -260,17 +260,58 @@ public class ChatServiceImpl implements ChatService {
             response.setResponseTime(System.currentTimeMillis());
             response.setMessage(responseText);
             
-            // 添加情感和意图信息到响应中
-            if (emotionResult != null) {
-                // 使用message字段存储额外信息
-                String emotionInfo = "情绪类型: " + emotionResult.getEmotionType() + 
-                                    ", 强度: " + emotionResult.getEmotionIntensity();
-                response.setMessage(response.getMessage() + "\n" + emotionInfo);
-            }
+            // 生成适度的信用卡推广内容
+            String promotionContent = generateCreditCardPromotion(context, emotionResult, intentResult);
             
-            if (intentResult != null) {
-                // 使用suggestions字段存储推荐选项
-                response.setSuggestions(generateSuggestions(intentResult));
+            // 如果有合适的推广内容，添加到响应中
+            if (promotionContent != null && !promotionContent.isEmpty()) {
+                // 添加一个空行作为分隔
+                String enhancedResponse = responseText + "\n\n" + promotionContent;
+                response.setResult(enhancedResponse);
+                response.setMessage(enhancedResponse);
+                
+                // 添加信用卡相关的推荐选项
+                List<String> suggestions = new ArrayList<>();
+                if (response.getSuggestions() != null && !response.getSuggestions().isEmpty()) {
+                    suggestions.addAll(response.getSuggestions());
+                }
+                
+                // 根据意图添加适当的信用卡相关选项，但限制总数不超过5个
+                if (suggestions.size() < 5) {
+                    if (!suggestions.contains("了解信用卡权益")) {
+                        suggestions.add("了解信用卡权益");
+                    }
+                    if (suggestions.size() < 5 && !suggestions.contains("查询我的积分")) {
+                        suggestions.add("查询我的积分");
+                    }
+                }
+                
+                response.setSuggestions(suggestions);
+                
+                // 添加促销信息
+                ChatResponse.PromotionInfo promotionInfo = new ChatResponse.PromotionInfo();
+                promotionInfo.setType("credit_card_benefits");
+                
+                // 如果上下文中有商品价格，计算可获得的积分
+                if (context.getCurrentProductPrice() != null) {
+                    int points = context.getCurrentProductPrice().intValue();
+                    promotionInfo.setPointsEarned(points);
+                }
+                
+                response.setPromotionInfo(promotionInfo);
+            } else {
+                // 添加情感和意图信息到响应中
+                if (emotionResult != null) {
+                    // 使用message字段存储额外信息
+                    String emotionInfo = "情绪类型: " + emotionResult.getEmotionType() + 
+                                        ", 强度: " + emotionResult.getEmotionIntensity();
+                    response.setMessage(response.getMessage() + "\n" + emotionInfo);
+                }
+                
+                if (intentResult != null) {
+                    // 使用suggestions字段存储推荐选项
+                    response.setSuggestions(generateSuggestions(intentResult));
+                }
             }
             
             return response;
@@ -329,6 +370,15 @@ public class ChatServiceImpl implements ChatService {
         systemPrompt.append("\n1. 保持友好、专业的语气");
         systemPrompt.append("\n2. 提供简洁、准确的信息");
         systemPrompt.append("\n3. 如果不确定，请诚实说明");
+        
+        // 添加信用卡推广指南
+        systemPrompt.append("\n\n信用卡推广指南：");
+        systemPrompt.append("\n1. 推广信用卡时保持适度，避免过度营销引起用户反感");
+        systemPrompt.append("\n2. 当用户询问支付相关问题时，可以自然地提及信用卡优势");
+        systemPrompt.append("\n3. 当用户情绪负面时，不要推广信用卡");
+        systemPrompt.append("\n4. 避免使用强制性语言，如\"必须\"、\"一定要\"等");
+        systemPrompt.append("\n5. 不要重复推广信用卡，每次对话最多提及一次");
+        systemPrompt.append("\n6. 强调实际价值而非夸大宣传，如具体的积分返现、免息期等");
         
         // 根据情绪调整响应策略
         if ("NEGATIVE".equals(emotionResult.getEmotionType())) {
@@ -398,6 +448,82 @@ public class ChatServiceImpl implements ChatService {
         }
         
         return suggestions;
+    }
+    
+    /**
+     * 生成适度的信用卡推广内容
+     * 根据用户情绪和对话上下文调整推广强度，避免过度营销引起用户反感
+     * 
+     * @param context 对话上下文
+     * @param emotionResult 情感分析结果
+     * @param intentResult 意图识别结果
+     * @return 适度的信用卡推广内容，如果不适合推广则返回null
+     */
+    private String generateCreditCardPromotion(ChatContext context, EmotionAnalysisResult emotionResult, IntentRecognitionResult intentResult) {
+        // 1. 检查是否适合进行信用卡推广
+        
+        // 如果用户情绪负面，不进行推广
+        if ("NEGATIVE".equals(emotionResult.getEmotionType())) {
+            return null;
+        }
+        
+        // 如果情绪强度较低（1-2分），不进行推广
+        if (emotionResult.getEmotionIntensity() != null && emotionResult.getEmotionIntensity() <= 2) {
+            return null;
+        }
+        
+        // 检查是否已经推广过信用卡，避免重复推广
+        Integer promotionAttempts = context.getPromotionAttempts();
+        if (promotionAttempts != null && promotionAttempts >= 2) {
+            return null; // 如果已经推广过两次，不再推广
+        }
+        
+        // 2. 根据意图类型选择合适的推广内容
+        String promotionContent = null;
+        
+        switch (intentResult.getIntentType()) {
+            case PAYMENT_QUERY:
+                // 支付相关查询，可以适度推广信用卡支付优势
+                promotionContent = "使用招商银行信用卡支付，您可以享受以下权益：\n" +
+                                   "• 最高12期免息分期\n" +
+                                   "• 消费即可获得积分奖励\n" +
+                                   "• 账单日后最长50天免息期";
+                break;
+                
+            case PRODUCT_QUERY:
+                // 商品查询，可以温和提示信用卡优惠
+                promotionContent = "温馨提示：使用招商银行信用卡购买此商品，可享受积分返现，相当于额外9.5折优惠。";
+                break;
+                
+            case ORDER_QUERY:
+                // 订单查询，可以轻度提示下次购买的优惠
+                promotionContent = "下次购物时使用招商银行信用卡，可享受更多专属优惠和积分奖励。";
+                break;
+                
+            case CREDIT_CARD:
+                // 信用卡相关咨询，可以提供详细信息
+                promotionContent = "招商银行信用卡为您提供：\n" +
+                                   "• 新用户首次消费，最高立减50元\n" +
+                                   "• 每月9日消费享9.5折优惠\n" +
+                                   "• 积分可直接抵现，1积分=0.1元\n" +
+                                   "• 全场商品支持3-24期灵活分期";
+                break;
+                
+            default:
+                // 其他意图，提供轻量级推广或不推广
+                if ("POSITIVE".equals(emotionResult.getEmotionType())) {
+                    promotionContent = "招商银行信用卡用户可享受本平台专属优惠，详情可咨询\"信用卡权益\"。";
+                }
+                break;
+        }
+        
+        // 3. 更新推广次数
+        if (promotionContent != null) {
+            context.setPromotionAttempts(promotionAttempts == null ? 1 : promotionAttempts + 1);
+            context.setCreditCardPromoted(true);
+        }
+        
+        return promotionContent;
     }
     
     /**
